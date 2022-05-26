@@ -10,40 +10,17 @@ public class PlayerInput : MonoBehaviour
     
     private int jumpTimer;
     private bool jump;
+    
     public Vector2 input
     {
+        //getter: function can get this input
         get
         {
             Vector2 i = Vector2.zero;
-           /* i.x = Input.GetAxis("Horizontal");
+            i.x = Input.GetAxis("Horizontal");
             i.y = Input.GetAxis("Vertical");
-            i *= (i.x != 0.0f && i.y != 0.0f) ? .7071f : 1.0f;
-           */ return i;
-        }
-    }
-
-    public Vector2 down
-    {
-        get { return _down; }
-    }
-
-    public Vector2 raw
-    {
-        get
-        {
-            Vector2 i = Vector2.zero;
-            i.x = Input.GetAxisRaw("Horizontal");
-            i.y = Input.GetAxisRaw("Vertical");
-            i *= (i.x != 0.0f && i.y != 0.0f) ? .7071f : 1.0f;
+            i *= (i.x != 0.0f && i.y != 0.0f) ? .7071f : 1.0f;//slows diagonally, quick normalization
             return i;
-        }
-    }
-
-    public float elevate
-    {
-        get
-        {
-            return Input.GetAxis("Elevate");
         }
     }
 

@@ -15,6 +15,24 @@ public class MouseLook : MonoBehaviour
     float distanceRadius= 0f;
 
     // Start is called before the first frame update
+
+    //3rd person
+
+    /*
+    public Transform cam;
+
+    private float horizontal;
+    private float vertical;
+    float targetAngle;
+    float angle;
+    public float turnSmoothTime=0.1f;
+    float turnSmoothVelocity;
+    */
+    //
+
+
+
+
     void Start()
     {
         Cursor.lockState = CursorLockMode.Locked;
@@ -39,14 +57,19 @@ public class MouseLook : MonoBehaviour
 
         //zoom in and out
         if((distanceRadius+ Input.mouseScrollDelta.y)>=0  &  (distanceRadius+ Input.mouseScrollDelta.y) <= 20){
-        distanceRadius +=Input.mouseScrollDelta.y;
+            distanceRadius +=Input.mouseScrollDelta.y;
         }
         
-        transform.localPosition = new Vector3(0, distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));
-
+        transform.localPosition = new Vector3(distanceRadius/8, distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));//camera position,
+                
+        //x axis,  shifts to the side; distanceRadius/10
         transform.localRotation = Quaternion.Euler(xRotation,0f,0f);
         playerBody.Rotate(Vector3.up* mouseX);
     
+
+
+        //interact here?
+
 
 
 

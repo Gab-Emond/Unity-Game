@@ -5,7 +5,7 @@ public class PlayerFadeOut : MonoBehaviour
     public Material opaqueMat;
     public Material transparentMat;
     public Renderer rend;
-    bool transparentPlayer = false;
+    private bool transparentPlayer = false;
     float fadeSpeed = 85f;
     float fadeAmount;
     Color objectColor;
@@ -62,7 +62,9 @@ public class PlayerFadeOut : MonoBehaviour
     }
 
 
-
+    public bool TransparentPlayer{
+        get => transparentPlayer;
+    }
 
 
 }

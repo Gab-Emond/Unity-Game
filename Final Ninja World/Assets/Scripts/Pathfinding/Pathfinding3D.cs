@@ -2,7 +2,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using System;
-
+using Utility.Math;
 public class Pathfinding3D : MonoBehaviour
 {
    PathRequestManager requestManager;
@@ -29,8 +29,8 @@ public class Pathfinding3D : MonoBehaviour
 		
 		
 		if (startNode.walkable && targetNode.walkable) {
-			Heap<Node3D> openSet = new Heap<Node3D>(grid.MaxSize);
-			HashSet<Node3D> closedSet = new HashSet<Node3D>();
+			Heap<Node3D> openSet = new Heap<Node3D>(grid.MaxSize);//quick to add/remove
+			HashSet<Node3D> closedSet = new HashSet<Node3D>();//quick to see if contains, hashed position per element (set==hashtable)
 			openSet.Add(startNode);
 			
 			while (openSet.Count > 0) {
@@ -112,18 +112,8 @@ public class Pathfinding3D : MonoBehaviour
 		int[] distVect = new int[3]{10,14,17};
 		int[] diff = differencesOfValues(dstX,dstY,dstZ);
 		
-		return dotProdIntArr(distVect, diff);
+		return MathUtility.dotProdIntArr(distVect, diff);
 
-	}
-
-	static int dotProdIntArr(int[] A, int[] B){
-		int sum = 0;
-		
-		for(int i = 0; i<A.Length;i++){
-			sum += A[0]*B[0];
-		}
-		
-		return sum;
 	}
 	
 	int[] differencesOfValues(int a, int b, int c)	{

@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 
 public class FieldOfView : MonoBehaviour {
+	//Field of View, from sebastian lague, to lower res at longer dist
 
 	public float viewRadius;
 	[Range(0,360)]
@@ -118,7 +119,7 @@ public class FieldOfView : MonoBehaviour {
 			float angle = (minAngle + maxAngle) / 2;
 			ViewCastInfo newViewCast = ViewCast (angle);
 
-			bool edgeDstThresholdExceeded = Mathf.Abs (minViewCast.dst - newViewCast.dst) > edgeDstThreshold;
+			bool edgeDstThresholdExceeded = Mathf.Abs (minViewCast.dst - newViewCast.dst) > edgeDstThreshold;//unoptimized
 			if (newViewCast.hit == minViewCast.hit && !edgeDstThresholdExceeded) {
 				minAngle = angle;
 				minPoint = newViewCast.point;

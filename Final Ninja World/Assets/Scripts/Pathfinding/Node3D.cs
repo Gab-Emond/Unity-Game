@@ -14,7 +14,7 @@ public class Node3D : IHeapItem<Node3D> {
 	public Node3D parent;
 	int heapIndex;
 	
-	public Node3D(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _gridZ) {
+	public Node3D(bool _walkable, Vector3 _worldPos, int _gridX, int _gridY, int _gridZ) {//constructor
 		walkable = _walkable;
 		worldPosition = _worldPos;
 		gridX = _gridX;

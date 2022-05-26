@@ -2,7 +2,8 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class LineProjectileWeapons : MonoBehaviour
+//raycast, mostly just work on instantaneous shots, trail renderer cant simulate travel time perfectly, if target moves
+public class RayWeapon : MonoBehaviour
 {
     private ParticleSystem ImpactParticleSystem;
     private TrailRenderer bulletTrail;
@@ -30,7 +31,7 @@ public class LineProjectileWeapons : MonoBehaviour
 			//Destroy (hitInfo.transform.gameObject);
 			//Debug.DrawLine (ray.origin, hitInfo.point, Color.red);
 
-			
+			//line renderer
 
 
 		}

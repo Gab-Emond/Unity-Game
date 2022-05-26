@@ -6,7 +6,7 @@ public class Grid3D : MonoBehaviour
 {
  
 	public Transform player;
-	public bool onlyDisplayPathGizmos = true;
+	public bool showGrid = false;
 	public LayerMask unwalkableMask;
 	public Vector3 gridWorldSize;
 	public float nodeRadius;
@@ -98,40 +98,24 @@ public class Grid3D : MonoBehaviour
 		
 		return grid[x,y,z];
 	}
-
-	public List<Node3D> path;
-	
+		
 	void OnDrawGizmos() {
 		Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x,gridWorldSize.y,gridWorldSize.z));
-		/*
-		if (onlyDisplayPathGizmos) {
-			Node3D playerNode = NodeFromWorldPoint(player.position);//indicates player pos
-			if (path != null) {
-				foreach (Node3D n in path) {
-					Gizmos.color = Color.black;
-					Gizmos.DrawSphere(n.worldPosition, (nodeRadius-.125f));
-				}
-			}
-		}
-		else {
 
-			if (grid != null) {
-				
-				Node3D playerNode = NodeFromWorldPoint(player.position);//indicates player pos
-				
-				foreach (Node3D n in grid) {
-					Gizmos.color = (n.walkable)?Color.white:Color.red;
-					if(playerNode == n){
-						Gizmos.color = Color.cyan;
-					}
-					if (path != null)
-						if (path.Contains(n))
-							Gizmos.color = Color.black;
-					Gizmos.DrawSphere(n.worldPosition, (nodeRadius-.125f));
+		if (grid != null && showGrid) {
+			
+			Node3D playerNode = NodeFromWorldPoint(player.position);//indicates player pos
+			
+			foreach (Node3D n in grid) {
+				Gizmos.color = (n.walkable)?Color.white:Color.red;
+				if(playerNode == n){
+					Gizmos.color = Color.cyan;
 				}
+				Gizmos.DrawSphere(n.worldPosition, (nodeRadius-.125f));
 			}
 		}
-		*/	
+		
+		/**/	
 	}
 	
 
