@@ -23,6 +23,8 @@ public class PlayerMovement : MonoBehaviour
     
     Vector2 inputs;
     private bool isGrounded;
+    bool isNextToWall;
+    Vector3 wallNormal;
     Vector3 velocity = Vector3.zero;
     Vector3 move;
     Vector3 v_0 ;
@@ -49,9 +51,7 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-    /// <summary>
-    /// Call whenever we want to stop a grapple
-    /// </summary>
+    
     public void StopGrapple() {
         isGrappled = false;
         grappleTarget = Vector3.zero;
@@ -76,8 +76,10 @@ public class PlayerMovement : MonoBehaviour
         //Debug.Log(isGrounded);
         //CollisionFlags.Below
 
-        //if climbing
-
+        //if can climb/slide
+		isNextToWall = NextToWall(groundMask, out wallNormal);
+        if(isNextToWall)
+            print("wall" + wallNormal);
         
     }
 
@@ -91,6 +93,9 @@ public class PlayerMovement : MonoBehaviour
         if(isGrappled){
             grapple(grappleTarget, grappleDistance, inputs);
         }
+		/*else if(isNextToWall && !isGrounded){
+			wallSlide();
+		}*/
         else{
             normal(inputs);
         }
@@ -121,9 +126,8 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    Vector3 quadFriction(Vector3 velocity){
+    Vector3 quadFriction(Vector3 velocity, float coef = 0.5f){
         Vector3 frictVel = Vector3.zero;
-        float coef = 1; 
         float frict = coef * Vector3.SqrMagnitude(velocity) * Time.deltaTime/2; 
         //F_r = c* v**2  
         frictVel = -frict*velocity/Vector3.Magnitude(velocity);
@@ -131,9 +135,8 @@ public class PlayerMovement : MonoBehaviour
         return frictVel;
     }
 
-    Vector3 linFriction(Vector3 velocity){
+    Vector3 linFriction(Vector3 velocity, float coef = 0.5f){
         Vector3 frictVel = Vector3.zero;
-        float coef = 0.5f; 
         //F_r = c* v   
         frictVel = -coef*velocity* Time.deltaTime;
         return frictVel;
@@ -144,7 +147,7 @@ public class PlayerMovement : MonoBehaviour
         Vector3 v_0 = velocity;
         if( v_0 != Vector3.zero){ 
 
-            v_current = Vector3.Lerp(v_0,Vector3.zero,mu*g*time); //see vector3.smoothdamp
+            v_current = Vector3.Lerp(v_0,Vector3.zero,mu*g*time); 
             return v_current;
         }
         else{
@@ -153,8 +156,8 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    async void normal(Vector2 inputs){
-        //1st person, assuming character rotation with camera
+    void normal(Vector2 inputs){
+        //1st person, character rotation with camera
 
         move = (transform.right * inputs.x + transform.forward * inputs.y)*speed;
         
@@ -174,23 +177,18 @@ public class PlayerMovement : MonoBehaviour
         else
         {
             velocity.y += gravity*Time.deltaTime; //gravity negative
+            
 
-            /*            */
+            if(Vector2.SqrMagnitude(new Vector2(velocity.x,velocity.z))>(speed*speed + 0.5f)){
+                
 
-            if(Vector2.SqrMagnitude(new Vector2(velocity.x,velocity.z))>speed*speed){
-
-                //vector projection on velocity
-                float parProjection = Vector3.Dot(move, velocity)/Vector3.SqrMagnitude(velocity);//just the length projected on the vector
-                if(parProjection<=0){//to see if goes in opposite direction than vector
-                    velocity += parProjection*velocity;
+                if(move.x*velocity.x < 0){
+                    velocity.x += move.x;
                 }
-                else{//if same direction, dont add
-
+                if(move.z*velocity.z < 0){
+                    velocity.z += move.z;
                 }
                 
-                //vector projection on perpendicular to velocity
-
-                //velocity += linFriction(new Vector3(velocity.x,0,velocity.z));
             }
             else{
                 velocity.x = move.x;
@@ -221,12 +219,46 @@ public class PlayerMovement : MonoBehaviour
         angle = Vector3.Angle(Vector3.up, ropeVect)* Mathf.Deg2Rad;
 
 
-        if ((transform.position-target).sqrMagnitude < distance*distance) {//not in tension
+        if ((transform.position-target).sqrMagnitude < distance*distance ) {//not in tension
             normal(inputs);
-        
         }
-        /*else if (angle > 1.5708f){
+        /*else if (angle > 1.5708f){//in tension, in the air
+			
+			
+            ropeVect = ropeVect.normalized;
+          
+			velocity.y += gravity*Time.deltaTime;
 
+			//projection of ropevect on x and z
+			
+			rope2d = new Vector3(ropeVect.x, 0, ropeVect.z);//flat
+            sideVect = Vector3.Cross(Vector3.up, ropeVect).normalized;//normalized, decide whether to optimize later
+
+			
+			if(rope2d*transform.forward*inputs.y<0){//inwards
+				
+				velocity +=  ( Vector3.Project(transform.forward,rope2d)+ Vector3.Project(transform.forward, sideVect))*inputs.y;
+			}
+			else{
+				velocity +=  (Vector3.Project(transform.forward, sideVect))*inputs.y;
+			}
+			
+			if(rope2d*transform.right*inputs.x<0){
+				velocity +=  (Vector3.Project(transform.right,rope2d)+Vector3.Project(transform.right, sideVect))*inputs.x;
+			}
+			else{
+				velocity +=  (Vector3.Project(transform.right, sideVect))*inputs.x;
+			}
+			
+			
+			//if(position+movement*Time.deltaTime < rope dist){
+			//	velocity = movement
+			//}
+
+			
+			//away from pulldir = 0
+ 			
+			
         }*/
         else{//in tension
             isGrounded = true;
@@ -238,15 +270,9 @@ public class PlayerMovement : MonoBehaviour
             controller.enabled = false;
             transform.position = target-ropeVect*distance;
             controller.enabled = true;
+  
             
-
-            
-
-            
-            
-            //Debug.DrawLine (transform.position, target, Color.yellow);
-
-            
+            //Debug.DrawLine (transform.position, target, Color.yellow);          
             
             //theta' = -(g/l)sin(theta)*t (2D)
             //angle'' = -g/l * angle
@@ -296,32 +322,68 @@ public class PlayerMovement : MonoBehaviour
     }
 
 
-
 	
     
-    void wallSlide(out float v_y, float t, float b, float m, float cst, Vector2 inputs){//cst = density diff* volume
-        float g = gravity;
-
-        v_y = (cst*g/b)*(1-Mathf.Exp(-b*t/m));//lerp((0,(cst*g/b),-b*t/m) //check which is better
-
+    void wallSlide( Vector3 wallNormal ,Vector2 inputs){//cst = density diff* volume
+        float gVel = gravity*Time.deltaTime;
+		Vector3 gravVelocity = Vector3.ProjectOnPlane(new Vector3(0,gVel,0), wallNormal);
+        //float v_y = (cst*g/b)*(1-Mathf.Exp(-b*t/m));//lerp((0,(cst*g/b),-b*t/m) //check which is better
+		
+		float cst = Mathf.Lerp(0.75f, 0.125f, wallNormal.y);//Mathf.Max(wallNormal.y, 0.125f);
+		
+		velocity+= gravVelocity ;
+		velocity+= quadFriction(velocity, cst);
+		//inputs
+		
+        move = (transform.right * inputs.x + transform.forward * inputs.y)*speed;
+		
+		Vector3 sideDir = Vector3.Cross(wallNormal, gravVelocity);
+		velocity += Vector3.Project(move, sideDir);
+		//velocity +=inputs.x;
+		
     }
 
-    public bool hasWallToSide(int dir, LayerMask layer){ // stolen from colanderp
-        float radius = 0.5f;
-        //Check for ladder in front of player
-        Vector3 top = transform.position + (transform.right * 0.25f * dir);
-        Vector3 bottom = top - (transform.up * radius);
-        top += (transform.up * radius);
-
-        return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.right * dir, 0.05f, layer).Length >= 1);
+    public bool NextToWall(LayerMask layer, out Vector3 wallNormal){ // stolen from colanderp
+        float radius = 0.625f;//larger than player radius, around the player
+        
+		
+		Vector3 startPos = transform.position-transform.up*0.4375f;//-height/4 //to start lower
+        RaycastHit hit;
+		float maxDist = 1f;
+		
+		if(Physics.SphereCast(startPos, radius, transform.up, out hit, maxDist, layer)){//throws sphere in direction indicated
+			wallNormal = hit.normal;
+			return true;
+		}
+		else{
+            wallNormal = Vector3.zero;
+			return false;
+		}
+		
+        //return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.right * dir, 0.05f, layer).Length >= 1);//throws capsule in direction indicated
     }
 
-
-    void OnControllerColliderHit(ControllerColliderHit hit)
-    {
+    /*
+    void OnControllerColliderHit(ControllerColliderHit hit){
         Vector3 wallNorm = hit.normal;
+		
+		float projectWall = wallNorm.y;//normalized, hence angle directly
+		
+		if(projectWall <= 0.375f && projectWall >= -0.125f ){ 
+			//wallslide
+			//if(!isGrounded)
+				//isNextToWall = true;//turn back false in update?
+
+		}
+		else if(projectWall > 0.375f){
+			//slope
+		}
+		else{
+			//fall
+		}
 
     }
+    */
 
 }
 
