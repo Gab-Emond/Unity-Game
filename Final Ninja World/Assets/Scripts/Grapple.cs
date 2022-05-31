@@ -27,6 +27,9 @@ public class Grapple : MonoBehaviour {
         else if (Input.GetMouseButtonUp(0)) {
             StopGrapple();
         }
+        if(Input.GetButtonDown("Jump")){
+            StopGrapple();
+        }
     }
 
     //Called after Update

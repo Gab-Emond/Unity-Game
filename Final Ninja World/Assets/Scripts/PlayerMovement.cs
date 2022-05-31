@@ -1,5 +1,6 @@
 ﻿
 using UnityEngine;
+using Utility.Math;
 
 public class PlayerMovement : MonoBehaviour
 {
@@ -69,6 +70,7 @@ public class PlayerMovement : MonoBehaviour
         /*
         controller.Move(move * speed * Time.deltaTime);
         */
+
         inputs = playerInput.input;
         //Gravity
 
@@ -77,7 +79,8 @@ public class PlayerMovement : MonoBehaviour
         //CollisionFlags.Below
 
         //if can climb/slide
-		isNextToWall = NextToWall(groundMask, out wallNormal);
+		/**/
+        isNextToWall = MovingTowardsWall(groundMask, out wallNormal, inputs);
         if(isNextToWall)
             print("wall" + wallNormal);
         
@@ -292,7 +295,6 @@ public class PlayerMovement : MonoBehaviour
                          
             }
 
-
             sideVect = Vector3.Cross(Vector3.up, ropeVect).normalized;//normalized, decide whether to optimize later
             pullDir =  Vector3.Cross(sideVect, ropeVect).normalized;//Quaternion.AngleAxis(-90, ropeVect)*sideVect;
           
@@ -303,9 +305,7 @@ public class PlayerMovement : MonoBehaviour
             correction = (ropeVect*velocity.sqrMagnitude/distance)*Time.deltaTime;            //a_c=v**2/r, towards center
             //Debug.DrawLine (transform.position+velocity, transform.position+correction+velocity, Color.red);
             velocity +=correction;
-            
-            
-            
+                        
             //player movement in relation to pulldir
 
             //basic slow down
@@ -314,10 +314,19 @@ public class PlayerMovement : MonoBehaviour
 
             velocity +=  (Vector3.Project(transform.forward, pullDir)/2 +Vector3.Project(transform.forward, sideVect)/4)*inputs.y;
             velocity +=  (Vector3.Project(transform.right, pullDir)/2 +Vector3.Project(transform.right, sideVect)/4)*inputs.x;
-                        
+            if (Input.GetButtonDown("Jump")){
+                velocity.y += Mathf.Sqrt(-2f* jumpHeight * gravity);
+            }    
+            /*
+            if(Input.GetButtonDown("Shift")){
+                if(distance){
 
-            
-        }
+                }
+            }
+            if(Input.GetButtonDown("Ctrl")){
+            }
+            */
+        }   
 
     }
 
@@ -326,62 +335,63 @@ public class PlayerMovement : MonoBehaviour
     
     void wallSlide( Vector3 wallNormal ,Vector2 inputs){//cst = density diff* volume
         float gVel = gravity*Time.deltaTime;
-		Vector3 gravVelocity = Vector3.ProjectOnPlane(new Vector3(0,gVel,0), wallNormal);
+		Vector3 gravDir = Vector3.ProjectOnPlane(Vector3.down, wallNormal);
         //float v_y = (cst*g/b)*(1-Mathf.Exp(-b*t/m));//lerp((0,(cst*g/b),-b*t/m) //check which is better
 		
 		float cst = Mathf.Lerp(0.75f, 0.125f, wallNormal.y);//Mathf.Max(wallNormal.y, 0.125f);
 		
-		velocity+= gravVelocity ;
+		velocity+= gVel*gravDir;
 		velocity+= quadFriction(velocity, cst);
 		//inputs
 		
         move = (transform.right * inputs.x + transform.forward * inputs.y)*speed;
 		
-		Vector3 sideDir = Vector3.Cross(wallNormal, gravVelocity);
-		velocity += Vector3.Project(move, sideDir);
+		Vector3 sideDir = Vector3.Cross(wallNormal, gravDir);//already normalized, sin 90 = 1
+        Vector3 sideMove = Vector3.Project(move, sideDir);
+		velocity += Vector3.Project(move,gravDir);
+        velocity.x = sideMove.x;
+        velocity.z = sideMove.z;
+
 		//velocity +=inputs.x;
 		
     }
 
-    public bool NextToWall(LayerMask layer, out Vector3 wallNormal){ // stolen from colanderp
-        float radius = 0.625f;//larger than player radius, around the player
-        
+    public bool MovingTowardsWall(LayerMask layer, out Vector3 wallNormal, Vector2 inputs){ // stolen from colanderp
+        float radius = 0.5f;//playerRadius, get
+        move = (transform.right * inputs.x + transform.forward * inputs.y);
 		
-		Vector3 startPos = transform.position-transform.up*0.4375f;//-height/4 //to start lower
+		Vector3 top = transform.position+Vector3.up*0.4375f;//-height/4 //to start lower
+        Vector3 bottom = transform.position-Vector3.up*0.25f;
         RaycastHit hit;
-		float maxDist = 1f;
+		float maxDist = 0.75f;
 		
-		if(Physics.SphereCast(startPos, radius, transform.up, out hit, maxDist, layer)){//throws sphere in direction indicated
-			wallNormal = hit.normal;
-			return true;
-		}
-		else{
-            wallNormal = Vector3.zero;
-			return false;
-		}
+        if(move != Vector3.zero){
+            if(Physics.CapsuleCast(top, bottom, radius, move , out hit, maxDist, layer)){
+                wallNormal = hit.normal;
+
+                float projectWall = wallNormal.y;//normalized, hence angle directly
 		
-        //return (Physics.CapsuleCastAll(top, bottom, 0.25f, transform.right * dir, 0.05f, layer).Length >= 1);//throws capsule in direction indicated
+                if(projectWall <= 0.375f && projectWall >= -0.125f ){ 
+			        //wallslide
+                    return true; 
+
+		        }
+                /*else if(projectWall > 0.375f){
+			        //slope
+		        }*/
+            }
+            
+        }
+        
+
+        wallNormal = Vector3.zero;
+        return false;
+		//if(Physics.SphereCast(startPos, radius, transform.up, out hit, maxDist, layer)){//throws sphere in direction indicated
+        //return (Physics.CapsuleCastAll(top, bottom, radius, move , maxDist, layer, out hit).Length >= 1);//throws capsule in direction indicated
     }
 
     /*
     void OnControllerColliderHit(ControllerColliderHit hit){
-        Vector3 wallNorm = hit.normal;
-		
-		float projectWall = wallNorm.y;//normalized, hence angle directly
-		
-		if(projectWall <= 0.375f && projectWall >= -0.125f ){ 
-			//wallslide
-			//if(!isGrounded)
-				//isNextToWall = true;//turn back false in update?
-
-		}
-		else if(projectWall > 0.375f){
-			//slope
-		}
-		else{
-			//fall
-		}
-
     }
     */
 

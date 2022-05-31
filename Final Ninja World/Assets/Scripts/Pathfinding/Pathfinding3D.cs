@@ -112,7 +112,7 @@ public class Pathfinding3D : MonoBehaviour
 		int[] distVect = new int[3]{10,14,17};
 		int[] diff = differencesOfValues(dstX,dstY,dstZ);
 		
-		return MathUtility.dotProdIntArr(distVect, diff);
+		return MathUtility.DotProdInArray(distVect, diff);
 
 	}
 	

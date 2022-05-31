@@ -29,7 +29,7 @@ namespace Utility.Math
         }
         //out: has to give values to outcart (resulting pos)
 
-        public static int dotProdIntArr(int[] A, int[] B){
+        public static int DotProdInArray(int[] A, int[] B){
             int sum = 0;
             
             for(int i = 0; i<A.Length;i++){
@@ -37,6 +37,10 @@ namespace Utility.Math
             }
             
             return sum;
+        }
+
+        public static float SigmoidFunct(float x, float maxVal = 1, float center = 0, float slope = -1){
+            return maxVal/(1.0f + Mathf.Exp(slope*(x-center)));
         }
 
 
