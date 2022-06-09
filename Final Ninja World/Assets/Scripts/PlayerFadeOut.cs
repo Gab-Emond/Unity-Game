@@ -2,6 +2,7 @@
 
 public class PlayerFadeOut : MonoBehaviour
 {
+    PlayerMovement playerMovement;
     public Material opaqueMat;
     public Material transparentMat;
     public Renderer rend;
@@ -12,14 +13,17 @@ public class PlayerFadeOut : MonoBehaviour
     
     void Start()
     {
-        
+        playerMovement = GetComponent<PlayerMovement>();
+
     }
 
     // Toggle the Object's visibility each second.
+    /*
     void Update()
     {
+        if(playerMovement.IsGrounded && !playerMovement.IsGrappled){
 
-        if (Input.GetButton("Fire3")){
+            if (Input.GetButtonDown("Fire3")){
             
             transparentPlayer = true;
             UpdateMaterial(transparentPlayer);
@@ -31,23 +35,33 @@ public class PlayerFadeOut : MonoBehaviour
                 rend.material.color = new Color(objectColor.r,objectColor.g,objectColor.b,fadeAmount);
             }
 
-
+            }
+            else if (Input.GetButtonUp("Fire3")){
+                
+                objectColor = rend.material.color;
+                fadeAmount = objectColor.a + fadeSpeed*Time.deltaTime;
+                if(fadeAmount<255){
+                    rend.material.color = new Color(objectColor.r,objectColor.g,objectColor.b,fadeAmount);
+                }
+                transparentPlayer = false;
+                UpdateMaterial(transparentPlayer);
+                
+            }
 
         }
-        else if (Input.GetButtonUp("Fire3")){
-            
+        else if(fadeAmount<255){
             objectColor = rend.material.color;
             fadeAmount = objectColor.a + fadeSpeed*Time.deltaTime;
-            if(fadeAmount<255){
-                rend.material.color = new Color(objectColor.r,objectColor.g,objectColor.b,fadeAmount);
-            }
+            rend.material.color = new Color(objectColor.r,objectColor.g,objectColor.b,fadeAmount);
+            
             transparentPlayer = false;
             UpdateMaterial(transparentPlayer);
-            
         }
+        
         
 
     }
+    */
 
 
 

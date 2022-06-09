@@ -10,6 +10,7 @@ public class PlayerMovement : MonoBehaviour
     //grappleTest
     public Vector3 grappleTarget;
     private bool isGrappled = false;
+    public bool IsGrappled => isGrappled;     // the Name property, getter
     private float grappleDistance;//grapple
     //jump+gravity
     public Transform groundCheck;
@@ -24,11 +25,14 @@ public class PlayerMovement : MonoBehaviour
     
     Vector2 inputs;
     private bool isGrounded;
+    public bool IsGrounded => isGrounded;     // the Name property, getter
+
     bool isNextToWall;
     Vector3 wallNormal;
     Vector3 velocity = Vector3.zero;
     Vector3 move;
-    Vector3 v_0 ;
+    Vector3 v_0;
+    private float timeOnWall = 0;
     //Vector3 position_0;
 
     //////////////////////////////////GrappleTestCode//////////////////////////////////////////////
@@ -81,9 +85,9 @@ public class PlayerMovement : MonoBehaviour
         //if can climb/slide
 		/**/
         isNextToWall = MovingTowardsWall(groundMask, out wallNormal, inputs);
-        if(isNextToWall)
+        /*if(isNextToWall)
             print("wall" + wallNormal);
-        
+        */
     }
 
     private void FixedUpdate() {
@@ -96,9 +100,9 @@ public class PlayerMovement : MonoBehaviour
         if(isGrappled){
             grapple(grappleTarget, grappleDistance, inputs);
         }
-		/*else if(isNextToWall && !isGrounded){
-			wallSlide();
-		}*/
+		else if(isNextToWall && !isGrounded){
+			wallSlide(wallNormal, inputs);
+		}
         else{
             normal(inputs);
         }
@@ -110,16 +114,15 @@ public class PlayerMovement : MonoBehaviour
         if(sqrAcc>100 && isGrappled)
             Debug.Log(sqrAcc);
         */
-        
 
 
         controller.Move(velocity* Time.deltaTime);
         
 
-        v_0 = velocity;
+        //v_0 = velocity;
 
         ///////////////////////Prev Velocity from Position///////////////////////// 
-        //v_0 = (transform.position-position_0)/Time.deltaTime;
+        //v_0 = (transform.position-position_0)/Time.deltaTime;//inside fixed update, deltatime becomes fixeddeltatime
         //velocity = v_0+Vector3.up*gravity*Time.deltaTime;
         //position_0 = transform.position;
     }
@@ -129,7 +132,7 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    Vector3 quadFriction(Vector3 velocity, float coef = 0.5f){
+    Vector3 quadFriction(Vector3 velocity, float coef = 0.5f){////cst = density diff* volume
         Vector3 frictVel = Vector3.zero;
         float frict = coef * Vector3.SqrMagnitude(velocity) * Time.deltaTime/2; 
         //F_r = c* v**2  
@@ -145,12 +148,36 @@ public class PlayerMovement : MonoBehaviour
         return frictVel;
     }
 
-    Vector3 CrouchSlide(Vector3 velocity, float mu, float g, float time){ 
+    Vector3 Crouch(Vector3 velocity, float crouchSpeed, Vector2 inputs){ 
         Vector3 v_current;
-        Vector3 v_0 = velocity;
+        v_0 = velocity;
+        float time = Time.deltaTime;
+        float mu = 0.5f;
+
+        if(Vector2.SqrMagnitude(new Vector2(velocity.x,velocity.z))>(crouchSpeed*crouchSpeed)){
+            if(move.x*velocity.x < 0){
+                velocity.x += move.x;
+            }
+            else if(move.x*move.x>velocity.x*velocity.x){
+                velocity.x = move.x;
+            }
+            if(move.z*velocity.z < 0){
+                velocity.z += move.z;
+            }
+            else if(move.z*move.z>velocity.z*velocity.z){
+                velocity.z = move.z;
+            }
+                
+        }
+        else{
+            velocity.x = move.x;
+            velocity.z = move.z;
+        }
+
+
         if( v_0 != Vector3.zero){ 
 
-            v_current = Vector3.Lerp(v_0,Vector3.zero,mu*g*time); 
+            v_current = Vector3.Lerp(v_0,Vector3.zero,mu*gravity*time); 
             return v_current;
         }
         else{
@@ -188,8 +215,14 @@ public class PlayerMovement : MonoBehaviour
                 if(move.x*velocity.x < 0){
                     velocity.x += move.x;
                 }
+                else if(move.x*move.x>velocity.x*velocity.x){
+                    velocity.x = move.x;
+                }
                 if(move.z*velocity.z < 0){
                     velocity.z += move.z;
+                }
+                else if(move.z*move.z>velocity.z*velocity.z){
+                    velocity.z = move.z;
                 }
                 
             }
@@ -207,14 +240,13 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    void grapple(Vector3 target, float distance, Vector2 inputs){//move unused
+    void grapple(Vector3 target, float distance, Vector2 inputs){//shorten over time?
         
         Vector3 ropeVect; 
         Vector3 sideVect;
         Vector3 pullDir;
         float pullSpeed = 0;//"attraction"
         float angle;
-        float g = gravity;
         float l = distance;
         Vector3 correction;
         
@@ -224,8 +256,11 @@ public class PlayerMovement : MonoBehaviour
 
         if ((transform.position-target).sqrMagnitude < distance*distance ) {//not in tension
             normal(inputs);
+            if (Input.GetButtonDown("Jump")){
+                velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
+            }
         }
-        /*else if (angle > 1.5708f){//in tension, in the air
+        /*else if (angle > 1.5708f){//in tension, above 90 degrees
 			
 			
             ropeVect = ropeVect.normalized;
@@ -270,10 +305,14 @@ public class PlayerMovement : MonoBehaviour
             ropeVect = ropeVect.normalized;
             //charcontroller overrides position transform
             /**/
+
+            v_0 = velocity;
+            
             controller.enabled = false;
             transform.position = target-ropeVect*distance;
             controller.enabled = true;
-  
+            
+            velocity = v_0;
             
             //Debug.DrawLine (transform.position, target, Color.yellow);          
             
@@ -285,11 +324,11 @@ public class PlayerMovement : MonoBehaviour
 
             if(angle<0.125){//small angle approx, sin theta => theta
                 
-                pullSpeed = -g*angle*Time.deltaTime;//*Time.deltaTime
+                pullSpeed = -gravity*angle*Time.deltaTime;//*Time.deltaTime
             
             }
             else{
-                pullSpeed = -g*Mathf.Sin(angle)*Time.deltaTime;//*Time.deltaTime       
+                pullSpeed = -gravity*Mathf.Sin(angle)*Time.deltaTime;//*Time.deltaTime       
 
                 //print(pullSpeed);
                          
@@ -301,7 +340,7 @@ public class PlayerMovement : MonoBehaviour
             velocity +=pullDir*pullSpeed;
             
             //Debug.DrawLine (transform.position, transform.position+sideVect, Color.red);
-           // Debug.DrawLine (transform.position, transform.position+velocity, Color.green);
+            Debug.DrawLine (transform.position, transform.position+pullDir, Color.green);
             correction = (ropeVect*velocity.sqrMagnitude/distance)*Time.deltaTime;            //a_c=v**2/r, towards center
             //Debug.DrawLine (transform.position+velocity, transform.position+correction+velocity, Color.red);
             velocity +=correction;
@@ -315,7 +354,8 @@ public class PlayerMovement : MonoBehaviour
             velocity +=  (Vector3.Project(transform.forward, pullDir)/2 +Vector3.Project(transform.forward, sideVect)/4)*inputs.y;
             velocity +=  (Vector3.Project(transform.right, pullDir)/2 +Vector3.Project(transform.right, sideVect)/4)*inputs.x;
             if (Input.GetButtonDown("Jump")){
-                velocity.y += Mathf.Sqrt(-2f* jumpHeight * gravity);
+                velocity.y += Mathf.Sqrt(-2f* jumpHeight * gravity);//*ropeVect.y
+                
             }    
             /*
             if(Input.GetButtonDown("Shift")){
@@ -333,37 +373,50 @@ public class PlayerMovement : MonoBehaviour
 
 	
     
-    void wallSlide( Vector3 wallNormal ,Vector2 inputs){//cst = density diff* volume
+    void wallSlide( Vector3 wallNormal ,Vector2 inputs){//just check initially, and keep wall dir until change?
         float gVel = gravity*Time.deltaTime;
 		Vector3 gravDir = Vector3.ProjectOnPlane(Vector3.down, wallNormal);
         //float v_y = (cst*g/b)*(1-Mathf.Exp(-b*t/m));//lerp((0,(cst*g/b),-b*t/m) //check which is better
 		
-		float cst = Mathf.Lerp(0.75f, 0.125f, wallNormal.y);//Mathf.Max(wallNormal.y, 0.125f);
+		float cst = Mathf.Lerp(0.75f, 0.5f, wallNormal.y);//Mathf.Max(wallNormal.y, 0.125f);
 		
 		velocity+= gVel*gravDir;
-		velocity+= quadFriction(velocity, cst);
-		//inputs
+		velocity+= quadFriction(velocity, cst);//friction, due to movement gets larger than gravity
+        
+        //sigmoid derivative, for vel variation; slow then fast
+		
+        //inputs
 		
         move = (transform.right * inputs.x + transform.forward * inputs.y)*speed;
 		
 		Vector3 sideDir = Vector3.Cross(wallNormal, gravDir);//already normalized, sin 90 = 1
         Vector3 sideMove = Vector3.Project(move, sideDir);
-		velocity += Vector3.Project(move,gravDir);
+
+        //velocity += Vector3.Project(move,gravDir);
         velocity.x = sideMove.x;
         velocity.z = sideMove.z;
 
 		//velocity +=inputs.x;
+
+        //jump: diagonal between normal and plane
+
+        if (Input.GetButtonDown("Jump")){
+            Vector3 jumpDir = -gravDir + wallNormal;
+            velocity += jumpDir*Mathf.Sqrt(-2f* jumpHeight * gravity)*0.7071f;
+        } /**/   
+
+		
 		
     }
 
-    public bool MovingTowardsWall(LayerMask layer, out Vector3 wallNormal, Vector2 inputs){ // stolen from colanderp
+    public bool MovingTowardsWall(LayerMask layer, out Vector3 wallNormal, Vector2 inputs){ // heavily edited from colanderp "isnexttowall"
         float radius = 0.5f;//playerRadius, get
         move = (transform.right * inputs.x + transform.forward * inputs.y);
 		
 		Vector3 top = transform.position+Vector3.up*0.4375f;//-height/4 //to start lower
         Vector3 bottom = transform.position-Vector3.up*0.25f;
         RaycastHit hit;
-		float maxDist = 0.75f;
+		float maxDist = 0.25f;
 		
         if(move != Vector3.zero){
             if(Physics.CapsuleCast(top, bottom, radius, move , out hit, maxDist, layer)){

@@ -5,6 +5,14 @@ using UnityEngine;
 namespace Enemy{
 	public class Guard : MonoBehaviour
 	{	
+		public enum EntityState
+		{
+		Guarding,
+        Searching,
+        Alerting,
+        Incapacitated
+		}
+
 		public EnemyController enemyController;
 		public Transform pathHolder;
 		public LayerMask viewMask;
@@ -30,11 +38,29 @@ namespace Enemy{
 				
 			}
 			move = FollowPath(wayPoints);
-			StartCoroutine(move);
+			StartCoroutine(move);//FollowPath(wayPoints) would also work
 
 
 		}
 
+		/*
+		void Update() {
+			//state machine
+			switch (switch_on)
+			{
+				case EntityState.Guarding:
+					FollowPath();
+				case EntityState.Searching:
+
+				case EntityState.Alerting:
+					
+				case EntityState.Incapacitated:
+
+				default:
+			}
+
+		}
+		*/
 
 		IEnumerator FollowPath(Vector3[] waypoints) {//A coroutine is a function that can suspend its execution (yield) until the given YieldInstruction finishes.
 			Vector3 currentVelocity = Vector3.zero;

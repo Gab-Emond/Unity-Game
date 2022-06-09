@@ -28,8 +28,8 @@ namespace Enemy
 			if (pathSuccessful) {		
 				path = newPath;
 				targetIndex = 0;
-				StopCoroutine("FollowPath");
-				StartCoroutine("FollowPath");
+				StopCoroutine(FollowPath());//"FollowPath" previously
+				StartCoroutine(FollowPath());
 			}
 		}
 
@@ -45,7 +45,7 @@ namespace Enemy
 						yield break;
 					}
 					targetWaypoint = path[targetIndex];
-					yield return StartCoroutine (TurnToFace (targetWaypoint));
+					yield return StartCoroutine (TurnToFace(targetWaypoint));
 				}
 				
 				
