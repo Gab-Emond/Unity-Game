@@ -5,6 +5,9 @@ using TMPro;
 
 public class ProjectileWeapon : MonoBehaviour
 {
+    public LayerMask hitableLayer;//3rdperson raycast
+
+
     //bullet 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
@@ -71,12 +74,19 @@ public class ProjectileWeapon : MonoBehaviour
     
     //replace instantiate (Instantiate(playerBullet, turret.transform.position, turret.transform.rotation);)
     void Shoot(){
+        /*
+        Vector3 bulletDirection;
 
-
-        if (Physics.Raycast(camera.position, camera.forward, out hit, maxDistance, whatIsGrappleable)) {}
+        if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, maxDistance, hitableLayer)){
+            bulletDirection = projectileSpawn.position - hit.point;
+        }
+        else{
+            bulletDirection;
+        }
+        */
         
         Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
-        Quaternion bulletDirection= projectileSpawn.rotation;
+        Quaternion bulletDirection= fpsCam.transform.rotation;//projectileSpawn.rotation
         //Vector3 v = bulletDirection.eulerAngles;
 
 
