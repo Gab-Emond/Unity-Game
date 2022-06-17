@@ -120,7 +120,7 @@ public class Pathfinding3D : MonoBehaviour
 		
 
 		int[] arr = new int[3]{a,b,c};
-		Array.Sort(arr);
+		Array.Sort(arr);//2 lazy to code
 		//Debug.Log("" + arr[0]+","+arr[1]+","+arr[2]);
 
 		int min = arr[0];

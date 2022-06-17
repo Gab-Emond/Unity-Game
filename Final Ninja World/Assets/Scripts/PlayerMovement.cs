@@ -8,7 +8,9 @@ public class PlayerMovement : MonoBehaviour
     public CharacterController controller;
     PlayerInput playerInput;
     //grappleTest
+    
     public Vector3 grappleTarget;
+
     private bool isGrappled = false;
     public bool IsGrappled => isGrappled;     // the Name property, getter
     private float grappleDistance;//grapple
@@ -37,9 +39,8 @@ public class PlayerMovement : MonoBehaviour
 
     //////////////////////////////////GrappleTestCode//////////////////////////////////////////////
     void Start() {
-
+        
         playerInput = GetComponent<PlayerInput>();
-
         //position_0 = transform.position;
         //StartGrapple(grappleTarget);
         v_0 = velocity;
@@ -110,21 +111,25 @@ public class PlayerMovement : MonoBehaviour
         ////////////////////////////////////////////////////////////////////////////
         
         /////////////////////////////Acceleration test/////////////////////////////
-        /*float sqrAcc = Vector3.SqrMagnitude((velocity-v_0)/Time.deltaTime);
-        if(sqrAcc>100 && isGrappled)
-            Debug.Log(sqrAcc);
-        */
-
+        /*float sqrAcc = Vector3.SqrMagnitude((velocity-v_0)/Time.deltaTime);*/
+        
+        Debug.DrawLine (transform.position, transform.position+velocity, Color.cyan);
+        //Debug.DrawLine (transform.position, transform.position+v_0, Color.cyan);
 
         controller.Move(velocity* Time.deltaTime);
+        //print(Vector3.SqrMagnitude(velocity));
+
         
-
-        //v_0 = velocity;
-
+        //Vector3 deltaX = transform.position - (position_0 + v_0*Time.deltaTime);//3rd law?
+        //Vector3 deltaV = v_0-(transform.position - position_0)/Time.deltaTime;
+        
         ///////////////////////Prev Velocity from Position///////////////////////// 
-        //v_0 = (transform.position-position_0)/Time.deltaTime;//inside fixed update, deltatime becomes fixeddeltatime
+       
+       // v_0 = (transform.position-position_0)/Time.deltaTime;//inside fixed update, deltatime becomes fixedDeltaTime
         //velocity = v_0+Vector3.up*gravity*Time.deltaTime;
         //position_0 = transform.position;
+        //v_0 = velocity;
+
     }
     void OnDrawGizmos() {//groundcheck
         Gizmos.color = Color.red;
@@ -236,9 +241,16 @@ public class PlayerMovement : MonoBehaviour
 
         }
 
-        
-
     }
+
+    /*void GrappleRigidBody(Vector3 target, float distance, Vector2 inputs){
+        Vector3 ropeVect; 
+        ropeVect = (target - transform.position);
+        controller.enabled = false;
+        transform.position = target-ropeVect*distance;
+        controller.enabled = true;
+    }*/
+
 
     void grapple(Vector3 target, float distance, Vector2 inputs){//shorten over time?
         
@@ -253,51 +265,41 @@ public class PlayerMovement : MonoBehaviour
         ropeVect = (target - transform.position);
         angle = Vector3.Angle(Vector3.up, ropeVect)* Mathf.Deg2Rad;
 
-
         if ((transform.position-target).sqrMagnitude < distance*distance ) {//not in tension
             normal(inputs);
             if (Input.GetButtonDown("Jump")){
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
         }
-        /*else if (angle > 1.5708f){//in tension, above 90 degrees
-			
-			
+        else if (angle > 1.5708f){//in tension (), above 90 degrees
+			normal(inputs);
+
             ropeVect = ropeVect.normalized;
-          
-			velocity.y += gravity*Time.deltaTime;
+            if((transform.position-target).sqrMagnitude >= distance*distance){
+                v_0 = velocity;
+                controller.enabled = false;
+                transform.position = target-ropeVect*distance;
+                controller.enabled = true;
+                velocity = v_0;
+                
+                if(Vector3.Dot(velocity,ropeVect)<0){
+                    correction = -Vector3.Project(velocity,ropeVect);
+                    velocity += correction;
+                }
+
+            }
+            
+
 
 			//projection of ropevect on x and z
-			
-			rope2d = new Vector3(ropeVect.x, 0, ropeVect.z);//flat
-            sideVect = Vector3.Cross(Vector3.up, ropeVect).normalized;//normalized, decide whether to optimize later
-
-			
-			if(rope2d*transform.forward*inputs.y<0){//inwards
-				
-				velocity +=  ( Vector3.Project(transform.forward,rope2d)+ Vector3.Project(transform.forward, sideVect))*inputs.y;
-			}
-			else{
-				velocity +=  (Vector3.Project(transform.forward, sideVect))*inputs.y;
-			}
-			
-			if(rope2d*transform.right*inputs.x<0){
-				velocity +=  (Vector3.Project(transform.right,rope2d)+Vector3.Project(transform.right, sideVect))*inputs.x;
-			}
-			else{
-				velocity +=  (Vector3.Project(transform.right, sideVect))*inputs.x;
-			}
-			
 			
 			//if(position+movement*Time.deltaTime < rope dist){
 			//	velocity = movement
 			//}
 
-			
 			//away from pulldir = 0
- 			
 			
-        }*/
+        }
         else{//in tension
             isGrounded = true;
 
@@ -340,11 +342,19 @@ public class PlayerMovement : MonoBehaviour
             velocity +=pullDir*pullSpeed;
             
             //Debug.DrawLine (transform.position, transform.position+sideVect, Color.red);
-            Debug.DrawLine (transform.position, transform.position+pullDir, Color.green);
-            correction = (ropeVect*velocity.sqrMagnitude/distance)*Time.deltaTime;            //a_c=v**2/r, towards center
+            //Debug.DrawLine (transform.position, transform.position+pullDir*pullSpeed, Color.green);
+            
+            if(Vector3.Dot(velocity,ropeVect)<0){/**/
+                correction = -Vector3.Project(velocity,ropeVect);//centripedalish force
+            }
+            else{
+                correction = Vector3.zero;
+            }
+
+            //correction = (ropeVect*velocity.sqrMagnitude/distance)*Time.deltaTime;       //a_c=v**2/r, towards center (v_t, tangential speed only)
             //Debug.DrawLine (transform.position+velocity, transform.position+correction+velocity, Color.red);
             velocity +=correction;
-                        
+            
             //player movement in relation to pulldir
 
             //basic slow down
@@ -366,6 +376,7 @@ public class PlayerMovement : MonoBehaviour
             if(Input.GetButtonDown("Ctrl")){
             }
             */
+            
         }   
 
     }

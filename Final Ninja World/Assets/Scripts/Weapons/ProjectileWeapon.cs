@@ -3,14 +3,13 @@ using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
 
-public class ProjectileWeapons : MonoBehaviour
+public class ProjectileWeapon : MonoBehaviour
 {
     //bullet 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
     
     //bullet force
-    public float shootForce, upwardForce;
     public float speed;
     Vector3 direction;
 
@@ -20,12 +19,11 @@ public class ProjectileWeapons : MonoBehaviour
     public bool allowButtonHold;
     int bulletsLeft, bulletsShot;
 
-    //bools
+    //bools (statemachine)
     bool shooting, readyToShoot, reloading;
 
     //Reference
     public Camera fpsCam;
-    public Transform attackPoint;
 
     //Graphics
     public GameObject muzzleFlash;
@@ -45,13 +43,10 @@ public class ProjectileWeapons : MonoBehaviour
     void Update()
     {
         
-         if(Input.GetKeyDown("mouseKey1")){
+         if(Input.GetKeyDown(KeyCode.Mouse0)){
            Shoot();
         }
-        
-
-
-
+    
     }
 
     private void MyInput(){
@@ -76,6 +71,9 @@ public class ProjectileWeapons : MonoBehaviour
     
     //replace instantiate (Instantiate(playerBullet, turret.transform.position, turret.transform.rotation);)
     void Shoot(){
+
+
+        if (Physics.Raycast(camera.position, camera.forward, out hit, maxDistance, whatIsGrappleable)) {}
         
         Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
         Quaternion bulletDirection= projectileSpawn.rotation;
@@ -85,9 +83,13 @@ public class ProjectileWeapons : MonoBehaviour
         GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
         Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
 
+        /*
         Rigidbody rb = projectile.GetComponent<Rigidbody>();
         
-        rb.AddForce(-speed*projectileSpawn.forward, ForceMode.Impulse);
+        rb.AddForce(-speed*projectileSpawn.forward, ForceMode.Impulse);//speed on weapon insdead of projectile?
+        rb.AddForce(fpsCam.transform.up * upwardForce, ForceMode.Impulse);
+        */
+        projectile.GetComponent<Projectile>().Launch(speed);
 
     }
 

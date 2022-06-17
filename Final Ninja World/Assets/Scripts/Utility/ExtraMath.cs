@@ -46,8 +46,32 @@ namespace Utility.Math
 
         /////////////////////////////////////////////////Sebastian Extra Methods for pathfinder
         
+        //smoothstep for vectors, from unity tips
+        public static Vector3 SmoothStep(Vector3 posInit, Vector3 posFinal, float time){
+            
+            Vector3 position = Vector3.Lerp(posInit, posFinal, Mathf.SmoothStep(0f,1f,time));
 
+            return position;
 
+        }
+        
+        //note smoothstep = 3x**2 - 2x**3
+        
+        public static Vector3 QuadFriction(Vector3 velocity, float coef = 0.5f){////cst = density diff* volume
+            Vector3 frictVel = Vector3.zero;
+            float frict = coef * Vector3.SqrMagnitude(velocity) * Time.deltaTime/2; 
+            //F_r = c* v**2  
+            frictVel = -frict*velocity/Vector3.Magnitude(velocity);
+
+            return frictVel;
+        }
+
+        public static Vector3 LinFriction(Vector3 velocity, float coef = 0.5f){
+            Vector3 frictVel = Vector3.zero;
+            //F_r = c* v   
+            frictVel = -coef*velocity* Time.deltaTime;
+            return frictVel;
+        }
 
     }
 }

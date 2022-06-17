@@ -7,7 +7,11 @@ public class Grapple : MonoBehaviour {
 
     public PlayerMovement playerMov;
     private LineRenderer lRenderer;
+    
+    public Transform grappledObject;
+    public Vector3 grappledDecal;
     private Vector3 grapplePoint;
+    
     public LayerMask whatIsGrappleable;
     public Transform gunTip, camera, player;
     private float maxDistance = 100f;
@@ -30,6 +34,10 @@ public class Grapple : MonoBehaviour {
         if(Input.GetButtonDown("Jump")){
             StopGrapple();
         }
+        if(grappling){//or change by making child of object attached to
+            grapplePoint = grappledObject.position + grappledDecal;
+            playerMov.grappleTarget = grapplePoint;
+        }
     }
 
     //Called after Update
@@ -45,6 +53,8 @@ public class Grapple : MonoBehaviour {
         if (Physics.Raycast(camera.position, camera.forward, out hit, maxDistance, whatIsGrappleable)) {
             grappling = true;
             grapplePoint = hit.point;
+            grappledObject = hit.transform;
+            grappledDecal = grapplePoint-grappledObject.position;
             //line
             float distanceFromPoint = Vector3.Distance(player.position, grapplePoint);
 
@@ -71,7 +81,7 @@ public class Grapple : MonoBehaviour {
     
     void DrawRope() {
         //If not grappling, don't draw rope
-        if (!grappling) return;
+        if (!grappling){return;} 
         currentGrapplePosition = grapplePoint;
         //currentGrapplePosition = Vector3.Lerp(currentGrapplePosition, grapplePoint, Time.deltaTime * 8f);
         

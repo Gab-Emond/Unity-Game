@@ -9,17 +9,17 @@ public class PathRequestManager : MonoBehaviour {
 	Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
 	PathRequest currentPathRequest;
 
-	static PathRequestManager instance;
+	static PathRequestManager instance;//A static variable in Unity is a variable that is shared by all instances of a class.(singleton, lets everyone access this single same class)
 	Pathfinding3D pathfinding;
 
 	bool isProcessingPath;
 
 	void Awake() {
-		instance = this;
+		instance = this;//single instance of pathrequest
 		pathfinding = GetComponent<Pathfinding3D>();
 	}
 
-	public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback) {
+	public static void RequestPath(Vector3 pathStart, Vector3 pathEnd, Action<Vector3[], bool> callback) {//everyone using this class (static class cannot be instantiated, no "new")
 		PathRequest newRequest = new PathRequest(pathStart,pathEnd,callback);
 		instance.pathRequestQueue.Enqueue(newRequest);
 		instance.TryProcessNext();

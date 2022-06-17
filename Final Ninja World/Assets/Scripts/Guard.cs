@@ -49,11 +49,12 @@ namespace Enemy{
 			switch (switch_on)
 			{
 				case EntityState.Guarding:
-					FollowPath();
+
 				case EntityState.Searching:
 
 				case EntityState.Alerting:
-					
+					StopCoroutine(followPath);
+				
 				case EntityState.Incapacitated:
 
 				default:
@@ -79,7 +80,7 @@ namespace Enemy{
 					yield return StartCoroutine (TurnToFace (targetWaypoint));
 				}
 				else if((transform.position-targetWaypoint).sqrMagnitude <= 0.125f){
-					transform.position = Vector3.MoveTowards (transform.position, targetWaypoint, Vector3.SqrMagnitude(currentVelocity) * Time.deltaTime);
+					transform.position = Vector3.MoveTowards(transform.position, targetWaypoint, Vector3.SqrMagnitude(currentVelocity) * Time.deltaTime);
 				}
 				else{
 					transform.position = Vector3.SmoothDamp(transform.position, targetWaypoint, ref currentVelocity, 1.25f , speed);//smoother than movetowards, sorta gauss func				}
@@ -102,6 +103,7 @@ namespace Enemy{
 
 		void LateUpdate()
 		{	
+			
 			//float playerVisibleTimer = 0;
 			if(CanSeePlayer(15,38)){
 				

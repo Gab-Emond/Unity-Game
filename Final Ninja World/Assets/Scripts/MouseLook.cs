@@ -63,11 +63,13 @@ public class MouseLook : MonoBehaviour
         transform.localPosition = new Vector3(distanceRadius/8, distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));//camera position,
                 
         //x axis,  shifts to the side; distanceRadius/10
-        transform.localRotation = Quaternion.Euler(xRotation,0f,0f);
-        playerBody.Rotate(Vector3.up* mouseX);
+        transform.localRotation = Quaternion.Euler(xRotation,0f,0f);//rotate camera
+        playerBody.Rotate(Vector3.up* mouseX);//rotate player
     
 
+        //move hands up with camera?
 
+        
         //interact here?
 
 

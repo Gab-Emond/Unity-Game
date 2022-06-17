@@ -1,4 +1,7 @@
 ﻿Shader "Unlit/Tutorial01Shader"
+
+//https://youtu.be/bR8DHcj6Htg?list=PLZNuapybY3eTF8QZoutrdTgX4dbnfnK8l
+
 {//on camera, can do post processing effects
     Properties
     {

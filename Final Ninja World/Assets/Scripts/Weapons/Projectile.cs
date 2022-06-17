@@ -1,7 +1,9 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-/// Modded from Dave's free bullet script
+using Utility.Math;//own 
+
+/// Modified from Dave's free bullet script
 /// 
 /// The code is fully commented but if you still have any questions
 /// don't hesitate to write a yt comment
@@ -27,7 +29,7 @@ public class Projectile : MonoBehaviour
     public float explosionForce;
 
     //Lifetime
-    public float maxLifetime = 1f;
+    public float maxLifetime = 10f;
     public bool explodeOnTouch = true;
     PhysicMaterial physics_mat;
 
@@ -37,32 +39,70 @@ public class Projectile : MonoBehaviour
     public GameObject impactEffect;
 
     //trailrenderer? selon si on veut
-    private void Awake() {
 
-        prevPos = transform.position; 
-        
-    }
+    //awake?
+
     private void Start()
     {
+        prevPos = transform.position;
         Setup();
-        StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));   
+        //StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
+        Launch(100f);
+
     }
     // Update is called once per frame
     void Update()
     {
-        //transform.position = transform.position + new Vector3( * movementSpeed * Time.deltaTime, verticalInput * movementSpeed * Time.deltaTime, 0);
+        //float step = speed*time.deltaTime;
+        //transform.position = transform.position + transform.forward*step; new Vector3( * movementSpeed * Time.deltaTime, verticalInput * movementSpeed * Time.deltaTime, 0);
         if (Physics.Linecast(prevPos, transform.position, out hitInfo)){
+
             //projectile hit something
 
-            //Don't count collisions with other bullets(?)
+            //Don't count collisions with self(?)
             if (hitInfo.collider.CompareTag("Bullet")) return;
-            //Don<t count collisions with player:
-
+            //Don<t count collisions with (own?) player:
+            if (hitInfo.collider.CompareTag("Player")) return;
+            transform.position = hitInfo.point;
+            rb.constraints = RigidbodyConstraints.FreezeAll;
             //if has rigid body
 
             //hitInfo
-            StartCoroutine(DestroyBulletAfterTime(gameObject, 0.0625f));
+            StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
+            //print("hit");
+
         }
+
+    }
+
+    private void FixedUpdate() {
+        rb.AddForce(MathUtility.LinFriction(Vector3.Project(transform.up, rb.velocity)));    //, ForceMode.Acceleration vs Impulse
+    }
+
+    
+
+    void LateUpdate() 
+    {
+        prevPos = transform.position;//take late position to see if hit
+    }
+
+    //1-move projectile forwards (rigidbody physics / translate)
+    
+    //2-lateupdate, keep track of previous frame position
+
+    //3-cast ray from previous position to current position
+
+    //4-use ray to check if projectile hit something between last and current position
+    
+    //5-use hit.normal to reflect hit effect 
+    
+    //6-remove projectile
+
+    public void Launch(float speed){
+        
+        
+        rb.AddForce(-speed*transform.forward, ForceMode.Impulse);
+        //rb.AddForce(fpsCam.transform.up * upwardForce, ForceMode.Impulse);
 
     }
 
@@ -88,10 +128,7 @@ public class Projectile : MonoBehaviour
         //Add a little delay, just to make sure everything works fine
         StartCoroutine(DestroyBulletAfterTime(gameObject, 0.0625f));
     }
-    void LateUpdate() 
-    {
-        prevPos = transform.position;//take late position to see if hit
-    }
+    
     
 
     private IEnumerator DestroyBulletAfterTime(GameObject other, float delay){
@@ -99,29 +136,20 @@ public class Projectile : MonoBehaviour
         yield return new WaitForSeconds(delay);
         Destroy(other);
     }
-    //1-move projectile forwards (rigidbody physics / translate)
     
-    //2-lateupdate, keep track of previous frame position
-
-    //3-cast ray from previous position to current position
-
-    //4-use ray to check if projectile hit something between last and current position
-    
-    //5-use hit.normal to reflect hit effect 
-    
-    //6-remove projectile
     
 
 
     private void Setup()
-    {
+    {   
+        rb = this.GetComponent<Rigidbody>();
         //Create a new Physic material
         physics_mat = new PhysicMaterial();
         physics_mat.bounciness = bounciness;
         physics_mat.frictionCombine = PhysicMaterialCombine.Minimum;
         physics_mat.bounceCombine = PhysicMaterialCombine.Maximum;
         //Assign material to collider
-        GetComponent<SphereCollider>().material = physics_mat;
+        //GetComponent<SphereCollider>().material = physics_mat;
 
         //Set gravity
         rb.useGravity = useGravity;

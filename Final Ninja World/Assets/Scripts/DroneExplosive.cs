@@ -1,91 +1,20 @@
-﻿using System.Collections;
+using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
 namespace Enemy
 {
-	public class Enemy : MonoBehaviour
-	{
-		public enum EnemyState
-		{
-			Wander,
-			Chase,
-			Attack
-		}
-
-		public Transform target;
+    public class DroneExplosive : MonoBehaviour
+    {
+        public Transform target;
 		float speed = 5;
 		private float speedWithAccel;
 		float turnSpeed = 45;
 		Vector3[] path;
 		int targetIndex;
-	    private EnemyState _currentState;
-
 		//https://answers.unity.com/questions/669598/detect-if-player-is-in-range-1.html
-		/*
-		private void Update(){
-			switch (_currentState){
-				case EnemyState.Wander:
-				{
-					if (NeedsDestination())
-					{
-						GetDestination();
-					}
 
-					transform.rotation = _desiredRotation;
 
-					transform.Translate(Vector3.forward * Time.deltaTime * 5f);
-
-					var rayColor = IsPathBlocked() ? Color.red : Color.green;
-					Debug.DrawRay(transform.position, _direction * _rayDistance, rayColor);
-
-					while (IsPathBlocked())
-					{
-						//Debug.Log("Path Blocked");
-						GetDestination();
-					}
-
-					var targetToAggro = CheckForAggro();
-					if (targetToAggro != null)
-					{
-						_target = targetToAggro.GetComponent<DroneShooter>();
-						_currentState = EnemyState.Chase;
-					}
-					
-					break;
-				}
-				case EnemyState.Chase:
-				{
-					if (_target == null)
-					{
-						_currentState = EnemyState.Wander;
-						return;
-					}
-					
-					transform.LookAt(_target.transform);
-					transform.Translate(Vector3.forward * Time.deltaTime * 5f);
-
-					if (Vector3.Distance(transform.position, _target.transform.position) < _attackRange)
-					{
-						_currentState = EnemyState.Attack;
-					}
-					break;
-				}
-				case EnemyState.Attack:
-				{
-					if (_target != null)
-					{
-						Destroy(_target.gameObject);
-					}
-					
-					// play laser beam
-					
-					_currentState = EnemyState.Wander;
-					break;
-				}
-			}
-    	}
-		*/
 
 		/*
 		void Start() {
@@ -94,7 +23,6 @@ namespace Enemy
 		*/
 		public void Alert(){
 			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
-			_currentState = EnemyState.Chase;
 		}
 		public void OnPathFound(Vector3[] newPath, bool pathSuccessful) {
 			if (pathSuccessful) {		
@@ -160,8 +88,5 @@ namespace Enemy
 				}
 			}
 		}
-		
-
-	}
-
+    }
 }
