@@ -94,14 +94,18 @@ namespace Enemy
 		*/
 		public void Alert(){
 			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
-			_currentState = EnemyState.Chase;
 		}
 		public void OnPathFound(Vector3[] newPath, bool pathSuccessful) {
 			if (pathSuccessful) {		
 				path = newPath;
 				targetIndex = 0;
+				_currentState = EnemyState.Chase;
 				StopCoroutine(FollowPath());//"FollowPath" previously
 				StartCoroutine(FollowPath());
+			}
+			else{
+				_currentState = EnemyState.Wander;
+				//path found failed,
 			}
 		}
 
@@ -122,7 +126,7 @@ namespace Enemy
 				
 				
 				//transform.Rotate(Vector3.right, 30*speed*Time.deltaTime);//rotate while moving closer
-				transform.position = Vector3.MoveTowards(transform.position,targetWaypoint,speed * Time.deltaTime);
+				transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
 				yield return null;
 
 			}
@@ -143,6 +147,49 @@ namespace Enemy
 
 		}
 
+		void IdlePath(){
+			
+			path = new Vector3[2];
+			RaycastHit hitInfo;
+			if(Physics.Linecast(transform.position, transform.position + Vector3.up*10f, hitInfo)){
+				path[0] = transform.position + Vector3.up * (hitInfo.distance-1f);
+
+			}
+			else{
+				path[0] = transform.position + Vector3.up * 8f;
+			}
+			
+			if(Physics.Linecast(transform.position, transform.position + Vector3.down*10f, hitInfo)){
+				path[1] = transform.position + Vector3.down * (hitInfo.distance-1f);
+			}
+			else{
+				path[1] = transform.position + Vector3.down * 8f;
+			}
+			
+			/*
+			Random r = new Random();
+			int rNodeNum = r.Next(1, 4); //for ints
+			path = new Vector3[rNodeNum];
+			path[0] = transform.position;
+			for (int i = 0; i< rNodeNum; i++){				
+				path[i] = (transform.position) + new Vector3(UnityEngine.Random.Range(-20f, 20f), 0f, UnityEngine.Random.Range(-20f, 20f));
+				//free position around transform
+			}
+			*/
+			
+			
+			
+		}
+		
+		/*
+		FindEmptyPointAroundPos(Vector3 pos){
+			Vector3 possiblePos = pos + new Vector3(UnityEngine.Random.Range(-20f, 20f), 0f, UnityEngine.Random.Range(-20f, 20f)); 
+			if(Physics.Linecast(pos, possiblePos)){
+				
+			}
+			
+		}
+		*/
 		
 		public void OnDrawGizmos() {
 			if (path != null) {

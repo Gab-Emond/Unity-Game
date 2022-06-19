@@ -16,6 +16,10 @@ public enum DroneShooterState
 
 public class DroneShooter : MonoBehaviour
 {
+	//projectile 
+    public GameObject projectilePrefab;
+    public Transform projectileSpawn;
+	
     /*public Team Team => _team;
     [SerializeField] private Team _team;*/
     [SerializeField] private LayerMask _layerMask;
@@ -27,10 +31,17 @@ public class DroneShooter : MonoBehaviour
     private Vector3 _destination;
     private Quaternion _desiredRotation;
     private Vector3 _direction;
-    private DroneShooter target;
+    private GameObject _target;
     private DroneShooterState _currentState;
-    
-
+    gameObject Projectile _projectile;
+	
+	//target movement
+	private Vector3 prevPos;
+	private Vector3 currPos;
+	int aimCall = 0;
+	float timeLastShot = 0f;
+	float timeBetweenShots;
+	
     private void Update()
     {
         switch (_currentState)
@@ -49,16 +60,17 @@ public class DroneShooter : MonoBehaviour
                 var rayColor = IsPathBlocked() ? Color.red : Color.green;
                 Debug.DrawRay(transform.position, _direction * _rayDistance, rayColor);
 
-                while (IsPathBlocked())
+                if(IsPathBlocked())
                 {
                     //Debug.Log("Path Blocked");
                     GetDestination();
-                }
+					break;
+				}
 
                 var targetToAggro = CheckForAggro();
                 if (targetToAggro != null)
                 {
-                    target = targetToAggro.GetComponent<DroneShooter>();
+                    _target = targetToAggro.GetComponent<DroneShooter>();
                     _currentState = DroneShooterState.Chase;
                 }
                 
@@ -66,39 +78,84 @@ public class DroneShooter : MonoBehaviour
             }
             case DroneShooterState.Chase:
             {
-                if (target == null)
+                if (_target == null)
                 {
                     _currentState = DroneShooterState.Wander;
                     return;
                 }
                 
-                transform.LookAt(target.transform);
+                transform.LookAt(_target.transform);//IEnumerator TurnToFace(Vector3 lookTarget) {
                 transform.Translate(Vector3.forward * Time.deltaTime * 5f);
 
-                if (Vector3.Distance(transform.position, target.transform.position) < _attackRange)
+                if (Vector3.Distance(transform.position, _target.transform.position) < _attackRange)
                 {
                     _currentState = DroneShooterState.Attack;
                 }
                 break;
             }
+			
             case DroneShooterState.Attack:
             {
-                if (target != null)
+                if (_target != null)
                 {
-                    Destroy(target.gameObject);
+					Aim(_target);//rotate towards shooting direction
+			
+                    //Destroy(_target.gameObject);
+                
+					if(aimCall == 1 && (Time.time - timeLastShot) > timeBetweenShots){
+						Shoot(_target.transform.position);
+						aimCall = 0;
+						timeLastShot = Time.time;
+					}
+					/*if(loaded && aimed){
+						
+					}*/
+				}	
+                // play laser beam
+                else{
+					_currentState = DroneShooterState.Wander;
                 }
                 
-                // play laser beam
-                
-                _currentState = DroneShooterState.Wander;
                 break;
             }
         }
     }
 
+	private void Aim(){
+		
+		float Time.deltaTime;
+		if(aimCall == 0){
+			prevPos = _target.transform.position;
+			aimCall++;
+			return;
+		}
+		else if(aimCall == 1){
+			currPos = _target.transform.position;
+			targetVelocity = (prevPos - currPos)/Time.deltaTime;
+		
+			Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
+			//transform, snap to direction
+			prevPos = _target.transform.position;
+		}
+		
+		
+	}
+	
+	
+	private void Shoot(Vector3 targetPos){
+		
+		Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
+        Quaternion bulletDirection = Quaternion.SetLookRotation(projectileSpawn.transform.forward, Vector3.up);
+		
+		GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
+        Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
+		projectile.GetComponent<Projectile>().Launch(speed);
+
+	}
+	
     /*
     public void Alert(){
-        PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
+        PathRequestManager.RequestPath(transform.position,_target.position, OnPathFound);
         _currentState = DroneShooterState.Chase;
 	}
     */
