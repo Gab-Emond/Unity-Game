@@ -33,7 +33,7 @@ public class PathRequestManager : MonoBehaviour {
 		}
 	}
 
-	public void FinishedProcessingPath(Vector3[] path, bool success) {
+	public void FinishedProcessingPath(Vector3[] path, bool success) {//pathRequest3D calls it, and starts the next try; 
 		currentPathRequest.callback(path,success);
 		isProcessingPath = false;
 		TryProcessNext();
