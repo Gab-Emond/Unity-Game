@@ -35,12 +35,6 @@ public class ProjectileWeapon : MonoBehaviour
 
     //bug fixing :D
     public bool allowInvoke = true;
-    
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
 
     // Update is called once per frame
     void Update()
@@ -86,7 +80,7 @@ public class ProjectileWeapon : MonoBehaviour
         */
         
         Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
-        Quaternion bulletDirection= fpsCam.transform.rotation;//projectileSpawn.rotation
+        Quaternion bulletDirection = Quaternion.SetLookRotation(fpsCam.transform.forward, Vector3.up);//fpsCam.transform.rotation;//projectileSpawn.rotation
         //Vector3 v = bulletDirection.eulerAngles;
 
 
