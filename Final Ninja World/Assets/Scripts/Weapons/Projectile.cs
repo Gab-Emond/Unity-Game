@@ -30,7 +30,7 @@ public class Projectile : MonoBehaviour
 
     //Lifetime
     public float maxLifetime = 10f;
-    public bool explodeOnTouch = true;
+    public bool explode = false;
     PhysicMaterial physics_mat;
 
 
@@ -66,17 +66,24 @@ public class Projectile : MonoBehaviour
             transform.position = hitInfo.point;
             rb.constraints = RigidbodyConstraints.FreezeAll;
             //if has rigid body
+             if(explode){
+                Explode();
+            }
+            else{
+                //hitInfo
+                StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
+                //print("hit");
+            }
 
-            //hitInfo
-            StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
-            //print("hit");
 
         }
 
     }
 
     private void FixedUpdate() {
-        rb.AddForce(MathUtility.LinFriction(Vector3.Project(transform.up, rb.velocity)));    //, ForceMode.Acceleration vs Impulse
+        if(useGravity){
+            rb.AddForce(MathUtility.LinFriction(Vector3.Project(transform.up, rb.velocity)));    //, ForceMode.Acceleration vs Impulse
+        }
     }
 
     

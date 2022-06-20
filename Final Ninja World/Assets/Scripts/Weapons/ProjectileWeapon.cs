@@ -11,7 +11,8 @@ public class ProjectileWeapon : MonoBehaviour
     //bullet 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
-    
+    public float maxDistance = 200f;
+
     //bullet force
     public float speed;
     Vector3 direction;
@@ -26,11 +27,12 @@ public class ProjectileWeapon : MonoBehaviour
     bool shooting, readyToShoot, reloading;
 
     //Reference
-    public Camera fpsCam;
+    public Camera camera;
 
     //Graphics
     public GameObject muzzleFlash;
     public TextMeshProUGUI ammunitionDisplay;
+    
     
 
     //bug fixing :D
@@ -40,7 +42,8 @@ public class ProjectileWeapon : MonoBehaviour
     void Update()
     {
         
-         if(Input.GetKeyDown(KeyCode.Mouse0)){
+
+        if(Input.GetKeyDown(KeyCode.Mouse0)){
            Shoot();
         }
     
@@ -71,7 +74,7 @@ public class ProjectileWeapon : MonoBehaviour
         /*
         Vector3 bulletDirection;
 
-        if (Physics.Raycast(fpsCam.transform.position, fpsCam.transform.forward, out hit, maxDistance, hitableLayer)){
+        if (Physics.Raycast(camera.transform.position, camera.transform.forward, out hit, maxDistance, hitableLayer)){
             bulletDirection = projectileSpawn.position - hit.point;
         }
         else{
@@ -79,19 +82,32 @@ public class ProjectileWeapon : MonoBehaviour
         }
         */
         
-        Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
-        Quaternion bulletDirection = Quaternion.SetLookRotation(fpsCam.transform.forward, Vector3.up);//fpsCam.transform.rotation;//projectileSpawn.rotation
+        //Find the exact hit position using a raycast
+        Ray ray = camera.ViewportPointToRay(new Vector3(0.5f, 0.5f, 0)); //Just a ray through the middle of your current view (from Dave code, otherwise just raycast)
+        RaycastHit hit;
+
+        //check if ray hits something
+        Vector3 targetPoint;
+        if (Physics.Raycast(ray, out hit, maxDistance))
+            targetPoint = hit.point;
+        else
+            targetPoint = ray.GetPoint(maxDistance); //Just a point far away from the player
+
+
+        
+        Vector3 spawnPos = projectileSpawn.position;//projectile.transform.position
+        Quaternion bulletDirection = Quaternion.LookRotation(spawnPos-targetPoint, Vector3.up);//camera.transform.rotation;//projectileSpawn.rotation
         //Vector3 v = bulletDirection.eulerAngles;
 
 
-        GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
-        Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
+        GameObject projectile = Instantiate(projectilePrefab, spawnPos, bulletDirection);
+        //Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
 
         /*
         Rigidbody rb = projectile.GetComponent<Rigidbody>();
         
         rb.AddForce(-speed*projectileSpawn.forward, ForceMode.Impulse);//speed on weapon insdead of projectile?
-        rb.AddForce(fpsCam.transform.up * upwardForce, ForceMode.Impulse);
+        rb.AddForce(camera.transform.up * upwardForce, ForceMode.Impulse);
         */
         projectile.GetComponent<Projectile>().Launch(speed);
 

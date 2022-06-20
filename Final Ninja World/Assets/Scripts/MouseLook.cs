@@ -19,8 +19,6 @@ public class MouseLook : MonoBehaviour
     //3rd person
 
     /*
-    public Transform cam;
-
     private float horizontal;
     private float vertical;
     float targetAngle;
@@ -29,9 +27,6 @@ public class MouseLook : MonoBehaviour
     float turnSmoothVelocity;
     */
     //
-
-
-
 
     void Start()
     {
@@ -66,6 +61,9 @@ public class MouseLook : MonoBehaviour
         transform.localRotation = Quaternion.Euler(xRotation,0f,0f);//rotate camera
         playerBody.Rotate(Vector3.up* mouseX);//rotate player
     
+        //for more complex 3rd person, edit player rotate more smoothly, when condition met
+
+
 
         //move hands up with camera?
 

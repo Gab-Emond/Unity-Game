@@ -151,7 +151,7 @@ namespace Enemy
 			
 			path = new Vector3[2];
 			RaycastHit hitInfo;
-			if(Physics.Linecast(transform.position, transform.position + Vector3.up*10f, hitInfo)){
+			if(Physics.Linecast(transform.position, transform.position + Vector3.up*10f, out hitInfo)){
 				path[0] = transform.position + Vector3.up * (hitInfo.distance-1f);
 
 			}
@@ -159,7 +159,7 @@ namespace Enemy
 				path[0] = transform.position + Vector3.up * 8f;
 			}
 			
-			if(Physics.Linecast(transform.position, transform.position + Vector3.down*10f, hitInfo)){
+			if(Physics.Linecast(transform.position, transform.position + Vector3.down*10f, out hitInfo)){
 				path[1] = transform.position + Vector3.down * (hitInfo.distance-1f);
 			}
 			else{

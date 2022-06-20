@@ -243,13 +243,7 @@ public class PlayerMovement : MonoBehaviour
 
     }
 
-    /*void GrappleRigidBody(Vector3 target, float distance, Vector2 inputs){
-        Vector3 ropeVect; 
-        ropeVect = (target - transform.position);
-        controller.enabled = false;
-        transform.position = target-ropeVect*distance;
-        controller.enabled = true;
-    }*/
+    
 
 
     void grapple(Vector3 target, float distance, Vector2 inputs){//shorten over time?

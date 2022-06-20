@@ -16,6 +16,8 @@ public enum DroneShooterState
 
 public class DroneShooter : MonoBehaviour
 {
+    public Fts ballistic;
+
 	//projectile 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
@@ -33,7 +35,8 @@ public class DroneShooter : MonoBehaviour
     private Vector3 _direction;
     private GameObject _target;
     private DroneShooterState _currentState;
-    gameObject Projectile _projectile;
+    public Projectile _projectile;
+    float _projectileSpeed;
 	
 	//target movement
 	private Vector3 prevPos;
@@ -70,7 +73,7 @@ public class DroneShooter : MonoBehaviour
                 var targetToAggro = CheckForAggro();
                 if (targetToAggro != null)
                 {
-                    _target = targetToAggro.GetComponent<DroneShooter>();
+                    _target = targetToAggro.gameObject;//.GetComponent<DroneShooter>();
                     _currentState = DroneShooterState.Chase;
                 }
                 
@@ -98,7 +101,7 @@ public class DroneShooter : MonoBehaviour
             {
                 if (_target != null)
                 {
-					Aim(_target);//rotate towards shooting direction
+					Aim();//rotate towards shooting direction
 			
                     //Destroy(_target.gameObject);
                 
@@ -123,7 +126,7 @@ public class DroneShooter : MonoBehaviour
 
 	private void Aim(){
 		
-		float Time.deltaTime;
+		//float Time.deltaTime;
 		if(aimCall == 0){
 			prevPos = _target.transform.position;
 			aimCall++;
@@ -131,10 +134,11 @@ public class DroneShooter : MonoBehaviour
 		}
 		else if(aimCall == 1){
 			currPos = _target.transform.position;
-			targetVelocity = (prevPos - currPos)/Time.deltaTime;
-		
+			Vector3 targetVelocity = (prevPos - currPos)/Time.deltaTime;
+		/*
+            ballistic.solve_ballistic_arc(arrow.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
 			Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
-			//transform, snap to direction
+		*/	//transform, snap to direction
 			prevPos = _target.transform.position;
 		}
 		
@@ -145,11 +149,11 @@ public class DroneShooter : MonoBehaviour
 	private void Shoot(Vector3 targetPos){
 		
 		Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
-        Quaternion bulletDirection = Quaternion.SetLookRotation(projectileSpawn.transform.forward, Vector3.up);
+        Quaternion bulletDirection = Quaternion.LookRotation(projectileSpawn.transform.forward, Vector3.up);
 		
 		GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
         Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
-		projectile.GetComponent<Projectile>().Launch(speed);
+		projectile.GetComponent<Projectile>().Launch(_projectileSpeed);
 
 	}
 	

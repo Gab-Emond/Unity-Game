@@ -25,10 +25,10 @@ public class Grapple : MonoBehaviour {
     }
 
     void Update() {
-        if (Input.GetMouseButtonDown(0)) {
+        if (Input.GetMouseButtonDown(1)) {
             StartGrapple();
         }
-        else if (Input.GetMouseButtonUp(0)) {
+        else if (Input.GetMouseButtonUp(1)) {
             StopGrapple();
         }
         if(Input.GetButtonDown("Jump")){
@@ -83,7 +83,7 @@ public class Grapple : MonoBehaviour {
         //If not grappling, don't draw rope
         if (!grappling){return;} 
         currentGrapplePosition = grapplePoint;
-        //currentGrapplePosition = Vector3.Lerp(currentGrapplePosition, grapplePoint, Time.deltaTime * 8f);
+        //currentGrapplePosition = Vector3.Lerp(gunTip.position, grapplePoint, Time.deltaTime * 8f);
         
         lRenderer.SetPosition(0, gunTip.position);
         lRenderer.SetPosition(1, currentGrapplePosition);
