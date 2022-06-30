@@ -35,6 +35,7 @@ namespace Enemy{
 
         private SatState currentState = SatState.Primed;
         bool shooting;
+        GameObject explosion;
 
         //time.Time: returns clock time, delta time not needed
         private void Start() {

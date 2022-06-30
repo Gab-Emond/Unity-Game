@@ -96,7 +96,7 @@ public class ProjectileWeapon : MonoBehaviour
 
         
         Vector3 spawnPos = projectileSpawn.position;//projectile.transform.position
-        Quaternion bulletDirection = Quaternion.LookRotation(spawnPos-targetPoint, Vector3.up);//camera.transform.rotation;//projectileSpawn.rotation
+        Quaternion bulletDirection = Quaternion.LookRotation(targetPoint-spawnPos, Vector3.up);//camera.transform.rotation;//projectileSpawn.rotation
         //Vector3 v = bulletDirection.eulerAngles;
 
 

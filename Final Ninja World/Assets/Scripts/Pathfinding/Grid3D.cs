@@ -83,7 +83,9 @@ public class Grid3D : MonoBehaviour
 	}
 	
 
-	public Node3D NodeFromWorldPoint(Vector3 worldPosition) {
+
+	/////////////////////Error: only works if grid at world center
+	public Node3D NodeFromWorldPoint(Vector3 worldPosition){
 		float percentX = worldPosition.x/gridWorldSize.x + 0.5f;//(worldPosition.x + gridWorldSize.x/2) / gridWorldSize.x; to stay in the positives (50+50)/100=1 to (-50+50)/100=0
 		float percentY = worldPosition.y/gridWorldSize.y + 0.5f;//(worldPosition.z + gridWorldSize.y/2) / gridWorldSize.y;
 		float percentZ = worldPosition.z/gridWorldSize.z + 0.5f;
@@ -102,7 +104,7 @@ public class Grid3D : MonoBehaviour
 	void OnDrawGizmos() {
 		Gizmos.DrawWireCube(transform.position,new Vector3(gridWorldSize.x,gridWorldSize.y,gridWorldSize.z));
 
-		if (grid != null && showGrid) {
+		/*if (grid != null && showGrid) {
 			
 			Node3D playerNode = NodeFromWorldPoint(player.position);//indicates player pos
 			
@@ -113,8 +115,14 @@ public class Grid3D : MonoBehaviour
 				}
 				Gizmos.DrawSphere(n.worldPosition, (nodeRadius-.125f));
 			}
+		}*/
+		if(Application.isPlaying)
+		{
+			Node3D playerNode = NodeFromWorldPoint(player.position);
+			Gizmos.DrawSphere(playerNode.worldPosition, (nodeRadius-.125f));
 		}
 		
+
 		/**/	
 	}
 	

@@ -101,9 +101,10 @@ public class PlayerMovement : MonoBehaviour
         if(isGrappled){
             grapple(grappleTarget, grappleDistance, inputs);
         }
-		else if(isNextToWall && !isGrounded){
+		else if(isNextToWall && !isGrounded){//will return grounded on any slope
 			wallSlide(wallNormal, inputs);
 		}
+        //else if(isNextToWall && isGrounded){}//boost jump up wall
         else{
             normal(inputs);
         }
@@ -377,8 +378,12 @@ public class PlayerMovement : MonoBehaviour
 
 
 	
-    
+    //(technically wallClimb)
     void wallSlide( Vector3 wallNormal ,Vector2 inputs){//just check initially, and keep wall dir until change?
+        
+        //todo;change wall normal velocity with exhaustion
+
+
         float gVel = gravity*Time.deltaTime;
 		Vector3 gravDir = Vector3.ProjectOnPlane(Vector3.down, wallNormal);
         //float v_y = (cst*g/b)*(1-Mathf.Exp(-b*t/m));//lerp((0,(cst*g/b),-b*t/m) //check which is better
@@ -386,7 +391,7 @@ public class PlayerMovement : MonoBehaviour
 		float cst = Mathf.Lerp(0.75f, 0.5f, wallNormal.y);//Mathf.Max(wallNormal.y, 0.125f);
 		
 		velocity+= gVel*gravDir;
-		velocity+= quadFriction(velocity, cst);//friction, due to movement gets larger than gravity
+		velocity+= quadFriction(velocity, cst);//friction, due to side components gets larger than downwards velocity
         
         //sigmoid derivative, for vel variation; slow then fast
 		
@@ -419,7 +424,7 @@ public class PlayerMovement : MonoBehaviour
         move = (transform.right * inputs.x + transform.forward * inputs.y);
 		
 		Vector3 top = transform.position+Vector3.up*0.4375f;//-height/4 //to start lower
-        Vector3 bottom = transform.position-Vector3.up*0.25f;
+        Vector3 bottom = transform.position-Vector3.up*0.35f;
         RaycastHit hit;
 		float maxDist = 0.25f;
 		
@@ -428,7 +433,8 @@ public class PlayerMovement : MonoBehaviour
                 wallNormal = hit.normal;
 
                 float projectWall = wallNormal.y;//normalized, hence angle directly
-		
+                //print(projectWall);
+                
                 if(projectWall <= 0.375f && projectWall >= -0.125f ){ 
 			        //wallslide
                     return true; 

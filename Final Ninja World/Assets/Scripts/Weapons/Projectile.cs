@@ -37,7 +37,13 @@ public class Projectile : MonoBehaviour
     private Vector3 prevPos;
     private RaycastHit hitInfo;
     public GameObject impactEffect;
+    
+    
+    
+    public string ignoreTag;
 
+    
+    
     //trailrenderer? selon si on veut
 
     //awake?
@@ -60,13 +66,16 @@ public class Projectile : MonoBehaviour
             //projectile hit something
 
             //Don't count collisions with self(?)
-            if (hitInfo.collider.CompareTag("Bullet")) return;
+            //if (hitInfo.collider.CompareTag("Bullet")) return;
+            
             //Don<t count collisions with (own?) player:
             if (hitInfo.collider.CompareTag("Player")) return;
+            
             transform.position = hitInfo.point;
             rb.constraints = RigidbodyConstraints.FreezeAll;
+            this.transform.parent = hitInfo.transform;
             //if has rigid body
-             if(explode){
+            if(explode){
                 Explode();
             }
             else{
@@ -108,7 +117,7 @@ public class Projectile : MonoBehaviour
     public void Launch(float speed){
         
         
-        rb.AddForce(-speed*transform.forward, ForceMode.Impulse);
+        rb.AddForce(speed*transform.forward, ForceMode.Impulse);
         //rb.AddForce(fpsCam.transform.up * upwardForce, ForceMode.Impulse);
 
     }

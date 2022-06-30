@@ -4,7 +4,7 @@ using UnityEngine;
 public class MouseLook : MonoBehaviour
 {
 
-
+    public LayerMask inTheWay;
     public Transform playerBody;
     float mouseX;
     float mouseY;
@@ -13,6 +13,7 @@ public class MouseLook : MonoBehaviour
     float xRotation = 0f;
 
     float distanceRadius= 0f;
+    public float maxRadius = 20f;
 
     // Start is called before the first frame update
 
@@ -51,7 +52,7 @@ public class MouseLook : MonoBehaviour
         //Debug.Log(transform.localPosition);
 
         //zoom in and out
-        if((distanceRadius+ Input.mouseScrollDelta.y)>=0  &  (distanceRadius+ Input.mouseScrollDelta.y) <= 20){
+        if((distanceRadius+ Input.mouseScrollDelta.y)>=0  &  (distanceRadius+ Input.mouseScrollDelta.y) <= maxRadius){
             distanceRadius +=Input.mouseScrollDelta.y;
         }
         
@@ -59,7 +60,7 @@ public class MouseLook : MonoBehaviour
                 
         //x axis,  shifts to the side; distanceRadius/10
         transform.localRotation = Quaternion.Euler(xRotation,0f,0f);//rotate camera
-        playerBody.Rotate(Vector3.up* mouseX);//rotate player
+        playerBody.Rotate(Vector3.up* mouseX);//rotate player, and camera by parenting
     
         //for more complex 3rd person, edit player rotate more smoothly, when condition met
 
@@ -69,9 +70,27 @@ public class MouseLook : MonoBehaviour
 
         
         //interact here?
+        CheckOcclusionCollision();
+    }
+
+    
 
 
+    private void CheckOcclusionCollision(){//or cinemachine
 
+        RaycastHit hit;
+
+
+        //Debug.DrawLine(transform.parent.position, transform.position, Color.green);
+        //check if ray hits something
+        if (distanceRadius > 0f && Physics.Linecast(transform.parent.position, transform.position, out hit, inTheWay)){
+            distanceRadius = Mathf.Clamp(hit.distance, 0, maxRadius); 
+            
+        }
 
     }
+
+
+
+
 }

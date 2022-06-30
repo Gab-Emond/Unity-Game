@@ -9,12 +9,17 @@ namespace Enemy{
         public int repeatNumTimes = 15;
         
         public bool alarmSounded = false;
-        public Enemy enemy;
+        public Enemy[] enemies;
 
         private IEnumerator alarmCoroutine;
 
         void Start() {
             //find enemies within a range
+            //Init();
+        }
+    
+        void Init(){
+            enemies = FindObjectsOfType<Enemy>();
         }
 
         public void SoundAlarm(){//async or ienum
@@ -29,7 +34,11 @@ namespace Enemy{
             while(i<repeatNumber) {
                 i++;
                 //SearchForTarget(param1, param2, ...);
-                enemy.Alert();
+                foreach (Enemy enemy in enemies){
+                    enemy.Alert();
+                }
+                
+                
                 print("alarm: "+ (repeatNumber-i));
                 yield return new WaitForSeconds(repeatRate);
             }

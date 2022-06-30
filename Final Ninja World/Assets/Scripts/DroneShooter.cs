@@ -11,39 +11,53 @@ public enum DroneShooterState
 {
     Wander,
     Chase,
-    Attack
+    Attack,
+    Out
 }
 
-public class DroneShooter : MonoBehaviour
+public class DroneShooter : MonoBehaviour//make child objects with different weapon types?
 {
-    public Fts ballistic;
+    //public Fts ballistic;
 
 	//projectile 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
-	
+	public float _projectileSpeed;
+
     /*public Team Team => _team;
     [SerializeField] private Team _team;*/
     [SerializeField] private LayerMask _layerMask;
     
-    private float _attackRange = 3f;
-    private float _rayDistance = 5.0f;
-    private float _stoppingDistance = 1.5f;
+    public float _attackRange = 6f;
     
     private Vector3 _destination;
     private Quaternion _desiredRotation;
     private Vector3 _direction;
     private GameObject _target;
     private DroneShooterState _currentState;
-    public Projectile _projectile;
-    float _projectileSpeed;
-	
+    //public Projectile _projectile;
+    
+    Vector3[] path;
+    int pathNodeIndex = 0;
+    int nextNodeIndex;
+    bool isLookingForPath = false;
+    float timeSinceGotPath = 0;
+
+    public float turnSpeed = 45;
+    public float speed = 5f;
+
+
 	//target movement
 	private Vector3 prevPos;
 	private Vector3 currPos;
-	int aimCall = 0;
-	float timeLastShot = 0f;
-	float timeBetweenShots;
+	private int aimCall = 0;
+	private float timeLastShot = 0f;
+	public float timeBetweenShots = 10f;
+    /**/
+    private void Start() {
+        _target = GameObject.Find("1st-3rd Person Player");
+        Alert(_target);
+    }
 	
     private void Update()
     {
@@ -51,70 +65,83 @@ public class DroneShooter : MonoBehaviour
         {
             case DroneShooterState.Wander:
             {
-                if (NeedsDestination())
-                {
-                    GetDestination();
-                }
-
-                transform.rotation = _desiredRotation;//snaps to rotation
-
-                transform.Translate(Vector3.forward * Time.deltaTime * 5f);
-
-                var rayColor = IsPathBlocked() ? Color.red : Color.green;
-                Debug.DrawRay(transform.position, _direction * _rayDistance, rayColor);
-
-                if(IsPathBlocked())
-                {
-                    //Debug.Log("Path Blocked");
-                    GetDestination();
-					break;
-				}
-
-                var targetToAggro = CheckForAggro();
-                if (targetToAggro != null)
-                {
-                    _target = targetToAggro.gameObject;//.GetComponent<DroneShooter>();
-                    _currentState = DroneShooterState.Chase;
-                }
                 
+                if(path == null){
+                    pathNodeIndex = 0;
+                    print("idle");
+                    GetIdlePath();
+                    return;
+                }
+
+
+                //if(){}//sees player, starts chase
+
+                FollowPath(0.25f, true, false);
+
                 break;
             }
             case DroneShooterState.Chase:
             {
                 if (_target == null)
                 {
+                    pathNodeIndex = 0;
+                    path = null;
                     _currentState = DroneShooterState.Wander;
                     return;
                 }
                 
-                transform.LookAt(_target.transform);//IEnumerator TurnToFace(Vector3 lookTarget) {
-                transform.Translate(Vector3.forward * Time.deltaTime * 5f);
 
-                if (Vector3.Distance(transform.position, _target.transform.position) < _attackRange)
-                {
-                    _currentState = DroneShooterState.Attack;
+                bool needsPath = (path == null)||(path[path.Length-1]-_target.transform.position).sqrMagnitude > _attackRange*_attackRange;
+                
+
+                if(needsPath){ //&& timeSinceLastCall > 1f){
+                    pathNodeIndex = 0;
+                    if(isLookingForPath){//||Time.time - timeSinceGotPath < 1f
+                       return;
+                    }
+                    else if(IsPathBlocked(_target.transform.position)){
+                        PathRequestManager.RequestPath(transform.position,_target.transform.position, OnPathFound);
+                        isLookingForPath = true;
+                        // if path blocked completely, lose target, go back to wander
+                        timeSinceGotPath = Time.time;
+                        return;
+                    }
+                    else{//if not blocked, go straight to target
+                        path = new Vector3[]{transform.position, _target.transform.position};
+                        //print("got");
+                        return;
+                    }
                 }
+
+
+                if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(_target.transform.position)){
+                    _currentState = DroneShooterState.Attack;
+                    return;
+                }
+
+                FollowPath(speed);
                 break;
             }
 			
-            case DroneShooterState.Attack:
-            {
-                if (_target != null)
-                {
-					Aim();//rotate towards shooting direction
-			
-                    //Destroy(_target.gameObject);
+            case DroneShooterState.Attack://could keep prev state, if different== first call
+            {   
+                path = null;
+                if (_target != null){
+                    if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(_target.transform.position)){
+                        Aim();//rotate towards shooting direction
                 
-					if(aimCall == 1 && (Time.time - timeLastShot) > timeBetweenShots){
-						Shoot(_target.transform.position);
-						aimCall = 0;
-						timeLastShot = Time.time;
-					}
-					/*if(loaded && aimed){
-						
-					}*/
+                        //print(Time.time-timeLastShot);
+                        if(aimCall == 1 && (Time.time - timeLastShot) > timeBetweenShots){//loaded + aim
+                            Shoot(_target.transform.position);
+                            aimCall = 0;
+                            timeLastShot = Time.time;
+                        }
+                    }
+                    else{
+                        print("restarts chase");
+                        _currentState = DroneShooterState.Chase;
+                    }
 				}	
-                // play laser beam
                 else{
 					_currentState = DroneShooterState.Wander;
                 }
@@ -122,6 +149,28 @@ public class DroneShooter : MonoBehaviour
                 break;
             }
         }
+        //print(_currentState);
+    }
+
+    public void Alert(GameObject target){
+		_target = target;
+        _currentState = DroneShooterState.Chase;
+	}
+
+    public void OnPathFound(Vector3[] newPath, bool pathSuccessful) {
+        if (pathSuccessful) {		
+            path = newPath;
+            //print(path[path.Length-1]);
+            //print(transform.position);
+
+        }
+        else{
+            print("nope");
+            path = null;
+            _currentState = DroneShooterState.Wander;
+            //path found failed,
+        }
+        isLookingForPath = false;
     }
 
 	private void Aim(){
@@ -136,23 +185,44 @@ public class DroneShooter : MonoBehaviour
 			currPos = _target.transform.position;
 			Vector3 targetVelocity = (prevPos - currPos)/Time.deltaTime;
 		/*
-            ballistic.solve_ballistic_arc(arrow.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
+            ballistic.solve_ballistic_arc(projectileSpawn.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
 			Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
 		*/	//transform, snap to direction
-			prevPos = _target.transform.position;
+
+            Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
+
+            double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
+            double b = (double)(Vector3.Dot(_relPos, targetVelocity));
+            double c = (double)(_relPos).sqrMagnitude;
+            double tRes1,tRes2; 
+            Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
+            
+
+            if (tRes1 !=null && tRes1 > 0f){
+                _direction = targetVelocity + (_relPos/(float)tRes1);
+
+            }
+            else if(tRes2 !=null && tRes2 > 0f){
+                _direction = targetVelocity + (_relPos/(float)tRes2);
+            }
+
+
+            
+			prevPos = currPos;
 		}
+        transform.LookAt(transform.position + _direction);
 		
 		
 	}
 	
 	
-	private void Shoot(Vector3 targetPos){
+	private void Shoot(Vector3 targetPos){//might need var later on, but not used rn
 		
 		Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
         Quaternion bulletDirection = Quaternion.LookRotation(projectileSpawn.transform.forward, Vector3.up);
 		
 		GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
-        Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
+        //Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
 		projectile.GetComponent<Projectile>().Launch(_projectileSpeed);
 
 	}
@@ -164,89 +234,122 @@ public class DroneShooter : MonoBehaviour
 	}
     */
     
-    private bool IsPathBlocked()
+    private bool IsPathBlocked(Vector3 targetPos)
     {
-        Ray ray = new Ray(transform.position, _direction);
-        var hitSomething = Physics.RaycastAll(ray, _rayDistance, _layerMask);
-        return hitSomething.Any();
+        bool hitSomething = Physics.Linecast(transform.position, targetPos, _layerMask);
+        return hitSomething;
     }
 
-    private void GetDestination()
-    {
-        Vector3 testPosition = (transform.position + (transform.forward * 4f)) +
-                               new Vector3(UnityEngine.Random.Range(-4.5f, 4.5f), 0f,
-                                   UnityEngine.Random.Range(-4.5f, 4.5f));
+    void GetIdlePath(){
+			
+        path = new Vector3[2];
+        path[0] = transform.position + Vector3.up * 0.25f;
+        path[1] = transform.position + Vector3.down * 0.25f;
+        /*RaycastHit hitInfo;
+        if(Physics.Linecast(transform.position, transform.position + Vector3.up*5f, out hitInfo)){
+            path[0] = transform.position + Vector3.up * (hitInfo.distance-1f);
 
-        //returns random position
-
-        _destination = new Vector3(testPosition.x, 1f, testPosition.z);
-
-        _direction = Vector3.Normalize(_destination - transform.position);
-        _direction = new Vector3(_direction.x, 0f, _direction.z);
-        _desiredRotation = Quaternion.LookRotation(_direction);
-    }
-
-    private bool NeedsDestination()
-    {
-        if (_destination == Vector3.zero)
-            return true;
-
-        var distance = Vector3.Distance(transform.position, _destination);
-        if (distance <= _stoppingDistance)
-        {
-            return true;
         }
-
-        return false;
+        else{
+            path[0] = transform.position + Vector3.up * 5f;
+        }
+        
+        if(Physics.Linecast(transform.position, transform.position + Vector3.down*5f, out hitInfo)){
+            path[1] = transform.position + Vector3.down * (hitInfo.distance-1f);
+        }
+        else{
+            path[1] = transform.position + Vector3.down * 5f;
+        }*/
+        
+        /*
+        Random r = new Random();
+        int rNodeNum = r.Next(1, 4); //for ints
+        path = new Vector3[rNodeNum];
+        path[0] = transform.position;
+        for (int i = 0; i< rNodeNum; i++){				
+            path[i] = (transform.position) + new Vector3(UnityEngine.Random.Range(-20f, 20f), 0f, UnityEngine.Random.Range(-20f, 20f));
+            //free position around transform
+        }
+        */
     }
-    /*
-    IEnumerator TurnToFace(Vector3 lookTarget) {
+
+
+    /**/
+    void TurnToFace(Vector3 lookTarget) {
         Vector3 dirToLookTarget = (lookTarget - transform.position).normalized;
         float targetAngle = 90 - Mathf.Atan2 (dirToLookTarget.z, dirToLookTarget.x) * Mathf.Rad2Deg;
-
-        while (Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) > 0.05f) {
-            float angle = Mathf.MoveTowardsAngle (transform.eulerAngles.y, targetAngle, turnSpeed * Time.deltaTime);
-            transform.eulerAngles = Vector3.up * angle;
-            yield return null;
-        }
+        float angle = Mathf.MoveTowardsAngle (transform.eulerAngles.y, targetAngle, turnSpeed * Time.deltaTime);
+        transform.eulerAngles = Vector3.up * angle;      
     }
-    */
-    
-    
-    Quaternion startingAngle = Quaternion.AngleAxis(-60, Vector3.up);
-    Quaternion stepAngle = Quaternion.AngleAxis(5, Vector3.up);
-    
-    private Transform CheckForAggro()
-    {
-        float aggroRadius = 5f;
+
+    bool IsFacingTarget(Vector3 targetPoint){
+
+        Vector3 dirToLookTarget = (targetPoint - transform.position).normalized;
+        float targetAngle = 90 - Mathf.Atan2 (dirToLookTarget.z, dirToLookTarget.x) * Mathf.Rad2Deg;
         
-        RaycastHit hit;
-        var angle = transform.rotation * startingAngle;
-        var direction = angle * Vector3.forward;
-        var pos = transform.position;
-        for(var i = 0; i < 24; i++)
-        {
-            if(Physics.Raycast(pos, direction, out hit, aggroRadius))
-            {
-                var DroneShooter = hit.collider.GetComponent<DroneShooter>();
-                if(DroneShooter != null) //&& DroneShooter.Team != gameObject.GetComponent<DroneShooter>().Team)
-                {
-                    Debug.DrawRay(pos, direction * hit.distance, Color.red);
-                    return DroneShooter.transform;
-                }
-                else
-                {
-                    Debug.DrawRay(pos, direction * hit.distance, Color.yellow);
-                }
-            }
-            else
-            {
-                Debug.DrawRay(pos, direction * aggroRadius, Color.white);
-            }
-            direction = stepAngle * direction;
-        }
+        return(Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) <= 0.05f);
 
-        return null;
+
     }
+
+    void FollowPath(float _speed, bool _loops= false, bool _turns = true) {
+			
+        Vector3 targetWaypoint = path[pathNodeIndex];
+        
+        
+        if (transform.position == targetWaypoint){//to turn, must be at waypoint
+            
+            /////////////////////////Errror sets next target without having turned
+
+           
+            if(pathNodeIndex == nextNodeIndex){
+                nextNodeIndex = (pathNodeIndex + 1)%path.Length;
+            }
+           
+
+            ///////////////////////////also make sure only updates once
+
+            if(_turns){
+                if(IsFacingTarget(path[nextNodeIndex])){
+                    pathNodeIndex = nextNodeIndex;
+                    
+                    //transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
+                }
+                else{
+                    TurnToFace(path[nextNodeIndex]);
+                }
+            }
+            else{
+                pathNodeIndex = nextNodeIndex;
+                //transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
+            }
+
+        }
+        else{
+            transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, _speed * Time.deltaTime);
+        }
+        
+    }
+
+    public void OnDrawGizmos() {
+        if (path != null) {
+
+            for (int i = pathNodeIndex; i < path.Length; i ++) {
+                Gizmos.color = Color.yellow;
+                Gizmos.DrawSphere(path[i], 1/4f);
+
+                if (i == pathNodeIndex) {
+                    Gizmos.DrawLine(transform.position, path[i]);
+                }
+                else {
+                    Gizmos.DrawLine(path[i-1],path[i]);
+                }
+            }
+        }
+    }
+		
+
+
+
 }
 
