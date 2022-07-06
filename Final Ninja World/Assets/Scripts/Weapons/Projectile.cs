@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using Utility.Math;//own 
-
+using Enemy;
 /// Modified from Dave's free bullet script
 /// 
 /// The code is fully commented but if you still have any questions
@@ -70,7 +70,12 @@ public class Projectile : MonoBehaviour
             
             //Don<t count collisions with (own?) player:
             if (hitInfo.collider.CompareTag("Player")) return;
+            /**/
+            if(hitInfo.collider.gameObject.GetComponent<DroneExplosive>() != null){
+                hitInfo.collider.gameObject.GetComponent<DroneExplosive>().TakeHit();
+            }
             
+
             transform.position = hitInfo.point;
             rb.constraints = RigidbodyConstraints.FreezeAll;
             this.transform.parent = hitInfo.transform;

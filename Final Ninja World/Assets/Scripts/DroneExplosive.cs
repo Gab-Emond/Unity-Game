@@ -4,9 +4,17 @@ using UnityEngine;
 
 namespace Enemy
 {
-    public class DroneExplosive : MonoBehaviour
+    public class DroneExplosive : MonoBehaviour //todo: change to enemy parenting
     {
-        public Transform target;
+        public GameObject target;
+
+		////////////////explosion
+	    public GameObject explosion;
+		public float explosionRange = 2f;
+		public float explosionForce = 10f;
+		public LayerMask whatIsEnemies = 1;
+
+
 		float speed = 5;
 		private float speedWithAccel;
 		float turnSpeed = 45;
@@ -21,8 +29,9 @@ namespace Enemy
 			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
 		}
 		*/
-		public void Alert(){
-			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
+		public void Alert(GameObject _target){
+			target = _target;
+			PathRequestManager.RequestPath(transform.position,target.transform.position, OnPathFound);
 		}
 		public void OnPathFound(Vector3[] newPath, bool pathSuccessful) {
 			if (pathSuccessful) {		
@@ -71,7 +80,45 @@ namespace Enemy
 
 		}
 
-		
+		private void OnTriggerEnter(){
+			print("hit");
+			Explode();
+
+		}
+
+		public void TakeHit(){
+			print("hit");
+			Explode();
+		}
+
+		private void Explode()
+		{
+			//Instantiate explosion
+			if (explosion != null) {
+				
+				Instantiate(explosion, transform.position, Quaternion.identity);
+
+				//Check for enemies 
+				Collider[] enemies = Physics.OverlapSphere(transform.position, explosionRange, whatIsEnemies);
+				for (int i = 0; i < enemies.Length; i++){
+					//Get component of enemy and call Take Damage
+
+					//Just an example!
+					///enemies[i].GetComponent<ShootingAi>().TakeDamage(explosionDamage);
+
+					//Add explosion force (if enemy has a rigidbody)
+					if (enemies[i].GetComponent<Rigidbody>())
+						enemies[i].GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, explosionRange);
+				}
+			}
+			//Add a little delay, just to make sure everything works fine
+			Destroy(gameObject);
+			//destroying object should stop coroutines; (stop moving)
+		}
+
+
+
+
 		public void OnDrawGizmos() {
 			if (path != null) {
 

@@ -2245,6 +2245,10 @@ PrefabInstance:
       propertyPath: m_Name
       value: SimpleIcoSphere
       objectReference: {fileID: 0}
+    - target: {fileID: 919132149155446097, guid: 651f4137cc21859499f22e321f9c969b, type: 3}
+      propertyPath: m_IsActive
+      value: 0
+      objectReference: {fileID: 0}
     m_RemovedComponents: []
   m_SourcePrefab: {fileID: 100100000, guid: 651f4137cc21859499f22e321f9c969b, type: 3}
 --- !u!4 &1214090706 stripped
@@ -2969,10 +2973,16 @@ MonoBehaviour:
   m_GameObject: {fileID: 1719560242}
   m_Enabled: 1
   m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: 78c55796d30d394408d83904733ed218, type: 3}
+  m_Script: {fileID: 11500000, guid: 807f44db0c312f04ea7386f804c5c1b1, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  target: {fileID: 1693885260}
+  target: {fileID: 0}
+  explosion: {fileID: 4436250462895342600, guid: 2824e12944d9c834db72f9f2494b5638, type: 3}
+  explosionRange: 5
+  explosionForce: 0
+  whatIsEnemies:
+    serializedVersion: 2
+    m_Bits: 0
 --- !u!64 &1719560247
 MeshCollider:
   m_ObjectHideFlags: 0
@@ -2981,7 +2991,7 @@ MeshCollider:
   m_PrefabAsset: {fileID: 0}
   m_GameObject: {fileID: 1719560242}
   m_Material: {fileID: 0}
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_Enabled: 1
   serializedVersion: 4
   m_Convex: 1

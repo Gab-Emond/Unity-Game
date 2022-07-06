@@ -123,5 +123,6 @@ MonoBehaviour:
   explosionRange: 0
   explosionForce: 0
   maxLifetime: 1
-  explodeOnTouch: 1
+  explode: 0
   impactEffect: {fileID: 0}
+  ignoreTag: 

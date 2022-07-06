@@ -116,6 +116,7 @@ public class Grid3D : MonoBehaviour
 				Gizmos.DrawSphere(n.worldPosition, (nodeRadius-.125f));
 			}
 		}*/
+		/*
 		if(Application.isPlaying)
 		{
 			Node3D playerNode = NodeFromWorldPoint(player.position);
@@ -123,7 +124,7 @@ public class Grid3D : MonoBehaviour
 		}
 		
 
-		/**/	
+		*/	
 	}
 	
 

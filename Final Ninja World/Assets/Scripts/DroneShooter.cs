@@ -39,8 +39,8 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
     
     Vector3[] path;
     int pathNodeIndex = 0;
-    int nextNodeIndex;
     bool isLookingForPath = false;
+    bool isTurning = false;
     float timeSinceGotPath = 0;
 
     public float turnSpeed = 45;
@@ -53,12 +53,14 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
 	private int aimCall = 0;
 	private float timeLastShot = 0f;
 	public float timeBetweenShots = 10f;
-    /**/
+    
+    /*
     private void Start() {
         _target = GameObject.Find("1st-3rd Person Player");
         Alert(_target);
     }
-	
+	*/
+
     private void Update()
     {
         switch (_currentState)
@@ -91,7 +93,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
                 }
                 
 
-                bool needsPath = (path == null)||(path[path.Length-1]-_target.transform.position).sqrMagnitude > _attackRange*_attackRange;
+                bool needsPath = (path == null)||(path[path.Length-1]-_target.transform.position).sqrMagnitude > _attackRange*_attackRange || IsPathBlocked(path[path.Length-1], _target.transform.position);
                 
 
                 if(needsPath){ //&& timeSinceLastCall > 1f){
@@ -99,7 +101,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
                     if(isLookingForPath){//||Time.time - timeSinceGotPath < 1f
                        return;
                     }
-                    else if(IsPathBlocked(_target.transform.position)){
+                    else if(IsPathBlocked(transform.position, _target.transform.position)){
                         PathRequestManager.RequestPath(transform.position,_target.transform.position, OnPathFound);
                         isLookingForPath = true;
                         // if path blocked completely, lose target, go back to wander
@@ -114,7 +116,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
                 }
 
 
-                if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(_target.transform.position)){
+                if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(transform.position, _target.transform.position)){
                     _currentState = DroneShooterState.Attack;
                     return;
                 }
@@ -127,7 +129,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
             {   
                 path = null;
                 if (_target != null){
-                    if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(_target.transform.position)){
+                    if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(transform.position, _target.transform.position)){
                         Aim();//rotate towards shooting direction
                 
                         //print(Time.time-timeLastShot);
@@ -234,9 +236,8 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
 	}
     */
     
-    private bool IsPathBlocked(Vector3 targetPos)
-    {
-        bool hitSomething = Physics.Linecast(transform.position, targetPos, _layerMask);
+    private bool IsPathBlocked(Vector3 startPos, Vector3 endPos){
+        bool hitSomething = Physics.Linecast(startPos, endPos, _layerMask);
         return hitSomething;
     }
 
@@ -299,31 +300,21 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
         
         if (transform.position == targetWaypoint){//to turn, must be at waypoint
             
-            /////////////////////////Errror sets next target without having turned
-
-           
-            if(pathNodeIndex == nextNodeIndex){
-                nextNodeIndex = (pathNodeIndex + 1)%path.Length;
-            }
-           
-
-            ///////////////////////////also make sure only updates once
-
-            if(_turns){
-                if(IsFacingTarget(path[nextNodeIndex])){
-                    pathNodeIndex = nextNodeIndex;
-                    
-                    //transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
-                }
-                else{
-                    TurnToFace(path[nextNodeIndex]);
-                }
-            }
-            else{
-                pathNodeIndex = nextNodeIndex;
+            /////////////////////////Errror sets next target without having turned           
+            
+            pathNodeIndex = (pathNodeIndex + 1)%path.Length;
+            //transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
+            isTurning = true;
+            
+        }
+        else if(isTurning && _turns){
+            if(IsFacingTarget(targetWaypoint)){
+                isTurning = false;
                 //transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
             }
-
+            else{
+                TurnToFace(targetWaypoint);
+            }
         }
         else{
             transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, _speed * Time.deltaTime);

@@ -183,8 +183,9 @@ namespace Enemy{
 
         void Recharging(){
             
-            float currTime = (Time.time - startTime) / rechargeTimeDuration;
-            beamRadius = Mathf.SmoothStep(beamRadius, beamRadiusInit, currTime);
+            //float currTime = (Time.time - startTime) / rechargeTimeDuration;
+            float timeStep = Time.deltaTime * rechargeTimeDuration;
+            beamRadius = Mathf.MoveTowards(beamRadius, beamRadiusInit, timeStep) ;//issue with Mathf.SmoothStep(beamRadius, beamRadiusInit, currTime)
             transform.position = new Vector3(laserCenter.x, beamRadius,laserCenter.z);
             
         }

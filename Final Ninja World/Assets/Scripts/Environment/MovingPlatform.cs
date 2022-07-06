@@ -68,9 +68,9 @@ public class MovingPlatform : MonoBehaviour
         
         else{
             
-            float t = (Time.time - startTime)/travelTime;/**/
+            float t = (Time.time - startTime)/travelTime;
             
-            transform.position = Vector3.Lerp(waypoints[prevWaypointIndex], targetWaypoint, Mathf.SmoothStep(0f,1f,t));
+            transform.position = Vector3.Lerp(waypoints[prevWaypointIndex], targetWaypoint, Mathf.SmoothStep(0f,1f,t));//change to math.utility
             
             /*
             Vector3 p0 = Vector3.Lerp(waypoints[prevWaypointIndex], targetWaypoint, t);
