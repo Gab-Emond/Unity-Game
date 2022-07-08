@@ -258,8 +258,6 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
         float targetAngle = 90 - Mathf.Atan2 (dirToLookTarget.z, dirToLookTarget.x) * Mathf.Rad2Deg;
         
         return(Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) <= 0.05f);
-
-
     }
 
     void FollowPath(float _speed, bool _loops= false, bool _turns = true) {
@@ -289,6 +287,11 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
             transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, _speed * Time.deltaTime);
         }
         
+    }
+
+
+    public void TakeHit(){
+
     }
 
     public void OnDrawGizmos() {
