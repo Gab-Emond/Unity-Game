@@ -759,6 +759,7 @@ MonoBehaviour:
   repeatNumTimes: 15
   alarmSounded: 0
   enemies: []
+  player: {fileID: 0}
 --- !u!4 &264399315
 Transform:
   m_ObjectHideFlags: 0
@@ -836,7 +837,7 @@ MonoBehaviour:
     serializedVersion: 2
     m_Bits: 256
   gridWorldSize: {x: 200, y: 100, z: 200}
-  nodeRadius: 1
+  nodeRadius: 0.75
 --- !u!114 &272768483
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -2313,7 +2314,7 @@ PrefabInstance:
       objectReference: {fileID: 2100000, guid: 4044f2ea56b53f54aaa48924f47bf3c5, type: 2}
     - target: {fileID: 919132149155446097, guid: 5643660b453a40e4a80d5f63de4d57cc, type: 3}
       propertyPath: m_Name
-      value: Drone_Mine
+      value: Drone_Mine (0)
       objectReference: {fileID: 0}
     - target: {fileID: 919132149155446097, guid: 5643660b453a40e4a80d5f63de4d57cc, type: 3}
       propertyPath: m_Layer
@@ -2835,7 +2836,7 @@ CharacterController:
   serializedVersion: 2
   m_Height: 2
   m_Radius: 0.5
-  m_SlopeLimit: 45
+  m_SlopeLimit: 90
   m_StepOffset: 0.0625
   m_SkinWidth: 0.08
   m_MinMoveDistance: 0.001
@@ -2983,6 +2984,7 @@ MonoBehaviour:
   whatIsEnemies:
     serializedVersion: 2
     m_Bits: 0
+  _maxRange: 0
 --- !u!64 &1719560247
 MeshCollider:
   m_ObjectHideFlags: 0

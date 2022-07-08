@@ -20,15 +20,118 @@ namespace Enemy
 		float turnSpeed = 45;
 		Vector3[] path;
 		int targetIndex;
-		//https://answers.unity.com/questions/669598/detect-if-player-is-in-range-1.html
+
+		private bool runningCoroutine = false;
+		private IEnumerator coroutine;
+		//Task t = new Task();//taskmanager
+
+		public float _maxRange;
 
 
+
+		/**/
+		void Start() {
+			//PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
+			GetIdlePath();
+			StartCoroutine(FollowPath());
+		}
+		
 
 		/*
-		void Start() {
-			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
-		}
-		*/
+		private void Update(){
+			switch (_currentState){
+				case EnemyState.Wander:
+				{
+					if (!runningCoroutine)
+					{
+						GetIdlePath();
+						runningCoroutine = true;
+						coroutine = 
+					}
+
+					
+					
+					break;
+				}
+				case EnemyState.Chase:
+				{
+					if (_target == null)
+					{
+						_currentState = EnemyState.Wander;
+						return;
+					}
+
+					bool needsPath = (path == null)||(path[path.Length-1]-_target.transform.position).sqrMagnitude > _maxRange*_maxRange || IsPathBlocked(path[path.Length-1], _target.transform.position);
+                
+
+
+					if(needsPath){ //&& timeSinceLastCall > 1f){
+						pathNodeIndex = 0;
+						if(isLookingForPath){//||Time.time - timeSinceGotPath < 1f
+							return;
+						}
+						else if(IsPathBlocked(transform.position, _target.transform.position)){
+							PathRequestManager.RequestPath(transform.position,_target.transform.position, OnPathFound);
+							isLookingForPath = true;
+							// if path blocked completely, lose target, go back to wander
+							timeSinceGotPath = Time.time;
+							return;
+						}
+						else{//if not blocked, go straight to target
+							path = new Vector3[]{transform.position, _target.transform.position};
+							//print("got");
+							return;
+						}
+                	}
+
+					
+					
+					if() //(Vector3.Distance(transform.position, _target.transform.position) < _attackRange)
+					{
+						//lostTarget?
+					}
+					
+					break;
+				}
+			}
+    	}
+		*//**/
+
+		void GetIdlePath(){
+				
+			path = new Vector3[2];
+			/*path[0] = transform.position + Vector3.up * 0.25f;
+			path[1] = transform.position + Vector3.down * 0.25f;*/
+			RaycastHit hitInfo;
+			if(Physics.Linecast(transform.position, transform.position + Vector3.up*10f, out hitInfo)){
+				path[0] = transform.position + Vector3.up * (hitInfo.distance-1f);
+
+			}
+			else{
+				path[0] = transform.position + Vector3.up * 10f;
+			}
+			
+			if(Physics.Linecast(transform.position, transform.position + Vector3.down*10f, out hitInfo)){
+				path[1] = transform.position + Vector3.down * (hitInfo.distance-1f);
+			}
+			else{
+				path[1] = transform.position + Vector3.down * 10f;
+			}
+			
+			/*
+			Random r = new Random();
+			int rNodeNum = r.Next(1, 4); //for ints
+			path = new Vector3[rNodeNum];
+			path[0] = transform.position;
+			for (int i = 0; i< rNodeNum; i++){				
+				path[i] = (transform.position) + new Vector3(UnityEngine.Random.Range(-20f, 20f), 0f, UnityEngine.Random.Range(-20f, 20f));
+				//free position around transform
+			}
+			*/
+    	}
+
+
+
 		public void Alert(GameObject _target){
 			target = _target;
 			PathRequestManager.RequestPath(transform.position,target.transform.position, OnPathFound);
@@ -42,14 +145,14 @@ namespace Enemy
 			}
 		}
 
-		IEnumerator FollowPath() {
+		IEnumerator FollowPath(){
 			
 			Vector3 targetWaypoint = path[0];
 			yield return StartCoroutine (TurnToFace (targetWaypoint));
 			
 			while (true) {
 				if (transform.position == targetWaypoint) {
-					targetIndex ++;
+					targetIndex = (targetIndex + 1) % path.Length;
 					if (targetIndex >= path.Length) {
 						yield break;
 					}
@@ -57,8 +160,8 @@ namespace Enemy
 					yield return StartCoroutine (TurnToFace(targetWaypoint));
 				}
 				
-				
-				//transform.Rotate(Vector3.right, 30*speed*Time.deltaTime);//rotate while moving closer
+				//Vector3 direction = targetWaypoint-transform.position;//Vector3.ProjectOnPlane(Vector3.right, direction)
+				transform.Rotate(Vector3.right, 30*speed*Time.deltaTime);//rotate while moving closer
 				transform.position = Vector3.MoveTowards(transform.position,targetWaypoint,speed * Time.deltaTime);
 				yield return null;
 
@@ -80,7 +183,7 @@ namespace Enemy
 
 		}
 
-		private void OnTriggerEnter(){
+		private void OnTriggerEnter(){//detects if player touches/inside
 			print("hit");
 			Explode();
 

@@ -13,7 +13,7 @@ namespace Enemy
 			Attack
 		}
 
-		public Transform target;
+		public GameObject _target;
 		float speed = 5;
 		private float speedWithAccel;
 		float turnSpeed = 45;
@@ -92,8 +92,10 @@ namespace Enemy
 			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
 		}
 		*/
-		public void Alert(){
-			PathRequestManager.RequestPath(transform.position,target.position, OnPathFound);
+		public void Alert(GameObject target){
+			_target = target;
+			_currentState = EnemyState.Chase;
+			//PathRequestManager.RequestPath(transform.position,target.transform.position, OnPathFound);
 		}
 		public void OnPathFound(Vector3[] newPath, bool pathSuccessful) {
 			if (pathSuccessful) {		
@@ -124,8 +126,6 @@ namespace Enemy
 					yield return StartCoroutine (TurnToFace(targetWaypoint));
 				}
 				
-				
-				//transform.Rotate(Vector3.right, 30*speed*Time.deltaTime);//rotate while moving closer
 				transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);
 				yield return null;
 

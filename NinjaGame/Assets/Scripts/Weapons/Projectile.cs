@@ -74,6 +74,10 @@ public class Projectile : MonoBehaviour
             if(hitInfo.collider.gameObject.GetComponent<DroneExplosive>() != null){
                 hitInfo.collider.gameObject.GetComponent<DroneExplosive>().TakeHit();
             }
+
+            if(hitInfo.gameObject.GetComponent<DroneShooter>() != null){
+                hitInfo.collider.gameObject.GetComponent<DroneShooter>().TakeHit();
+            }
             
 
             transform.position = hitInfo.point;

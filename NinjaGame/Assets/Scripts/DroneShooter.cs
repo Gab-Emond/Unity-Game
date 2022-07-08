@@ -54,12 +54,12 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
 	private float timeLastShot = 0f;
 	public float timeBetweenShots = 10f;
     
-    /*
+    /**/
     private void Start() {
-        _target = GameObject.Find("1st-3rd Person Player");
+        _target = GameObject.FindWithTag("Player");//GameObject.Find("1st-3rd Person Player");//slower than tag finder
         Alert(_target);
     }
-	*/
+	
 
     private void Update()
     {
@@ -229,12 +229,6 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
 
 	}
 	
-    /*
-    public void Alert(){
-        PathRequestManager.RequestPath(transform.position,_target.position, OnPathFound);
-        _currentState = DroneShooterState.Chase;
-	}
-    */
     
     private bool IsPathBlocked(Vector3 startPos, Vector3 endPos){
         bool hitSomething = Physics.Linecast(startPos, endPos, _layerMask);
@@ -246,32 +240,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
         path = new Vector3[2];
         path[0] = transform.position + Vector3.up * 0.25f;
         path[1] = transform.position + Vector3.down * 0.25f;
-        /*RaycastHit hitInfo;
-        if(Physics.Linecast(transform.position, transform.position + Vector3.up*5f, out hitInfo)){
-            path[0] = transform.position + Vector3.up * (hitInfo.distance-1f);
-
-        }
-        else{
-            path[0] = transform.position + Vector3.up * 5f;
-        }
         
-        if(Physics.Linecast(transform.position, transform.position + Vector3.down*5f, out hitInfo)){
-            path[1] = transform.position + Vector3.down * (hitInfo.distance-1f);
-        }
-        else{
-            path[1] = transform.position + Vector3.down * 5f;
-        }*/
-        
-        /*
-        Random r = new Random();
-        int rNodeNum = r.Next(1, 4); //for ints
-        path = new Vector3[rNodeNum];
-        path[0] = transform.position;
-        for (int i = 0; i< rNodeNum; i++){				
-            path[i] = (transform.position) + new Vector3(UnityEngine.Random.Range(-20f, 20f), 0f, UnityEngine.Random.Range(-20f, 20f));
-            //free position around transform
-        }
-        */
     }
 
 

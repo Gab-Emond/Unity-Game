@@ -10,8 +10,10 @@ namespace Enemy{
         
         public bool alarmSounded = false;
         public Enemy[] enemies;
+        public GameObject player;
 
         private IEnumerator alarmCoroutine;
+
 
         void Start() {
             //find enemies within a range
@@ -35,7 +37,7 @@ namespace Enemy{
                 i++;
                 //SearchForTarget(param1, param2, ...);
                 foreach (Enemy enemy in enemies){
-                    enemy.Alert();
+                    enemy.Alert(player);
                 }
                 
                 
