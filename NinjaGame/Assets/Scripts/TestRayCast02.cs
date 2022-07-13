@@ -1,7 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-using Enemy;
 public class TestRayCast02 : MonoBehaviour
 {
     public LayerMask mask;

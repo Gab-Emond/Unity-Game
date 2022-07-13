@@ -1,4 +1,5 @@
 ﻿Shader "Unlit/Tutorial01Shader"
+//(custom)/ - where the shader will be placed in unity material link
 
 //https://youtu.be/bR8DHcj6Htg?list=PLZNuapybY3eTF8QZoutrdTgX4dbnfnK8l
 
@@ -8,6 +9,10 @@
         _MainTex ("Texture", 2D) = "pink" {}//default texture color, if no texture will be pink
         _Color("Color",Color) = (1,1,1,1)//default value rgba (alpha=visible)
     }
+    CGINCLUDE
+    //Include extra shader file/code 
+    //ShaderBase.cginc
+    ENDCG
     SubShader//alters shader for each item of a same material
     {
         Tags { "RenderType"="Opaque" }
@@ -40,16 +45,20 @@
             sampler2D _MainTex;
             float4 _MainTex_ST;
 
+            //called for every vertex from a material (lets you deform object)
             v2f vert (appdata v)//in (v)
             {
                 v2f o;//out
+
+                v.vertex.y += sin(v.vertex.z+_Time.y)*0.3;//_Time (t/20, t, t*2, t*3), use to animate things inside the shaders.
                 o.vertex = UnityObjectToClipPos(v.vertex);//takes object and puts it in perspective with camera
-                o.uv = TRANSFORM_TEX(v.uv, _MainTex);
+                o.uv = TRANSFORM_TEX(v.uv, _MainTex);//passes along values, the uv coords (transform tex lets you stretch or shrink vertex shader)
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
 
-            fixed4 frag (v2f i) : SV_Target
+            //fragment(pixel shader) covert vertex, to 3d space; return colors
+            fixed4 frag (v2f i) : SV_Target 
             {
                 // sample the texture
                 fixed4 col = tex2D(_MainTex, i.uv);

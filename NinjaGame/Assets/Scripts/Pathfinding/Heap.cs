@@ -103,7 +103,12 @@ public class Heap<T> where T : IHeapItem<T> {
 	}
 }
 
-public interface IHeapItem<T> : IComparable<T> {//icomparable is a c# generic
+/*
+An interface contains definitions for a group of related functionalities that a non-abstract class or a struct must implement. 
+An interface may define static methods, which must have an implementation
+*/
+//interface inherits another interface
+public interface IHeapItem<T> : IComparable<T> {//icomparable is a c# generic (IComparable is implemented by types whose values can be ordered or sorted)
 	//access and change private fields (get; set; for shorthand return value and change value)
 	int HeapIndex {
 		get;

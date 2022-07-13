@@ -15,14 +15,15 @@ public enum DroneShooterState
     Out
 }
 
-public class DroneShooter : MonoBehaviour//make child objects with different weapon types?
+public class DroneShooter : Enemy, IDamageable//make child objects with different weapon types?
 {
+    
     //public Fts ballistic;
 
-	//projectile 
+    //projectile 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
-	public float _projectileSpeed;
+    public float _projectileSpeed;
 
     /*public Team Team => _team;
     [SerializeField] private Team _team;*/
@@ -45,21 +46,27 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
 
     public float turnSpeed = 45;
     public float speed = 5f;
+    //health = 3;
 
-
-	//target movement
-	private Vector3 prevPos;
-	private Vector3 currPos;
-	private int aimCall = 0;
-	private float timeLastShot = 0f;
-	public float timeBetweenShots = 10f;
+    //target movement
+    private Vector3 prevPos;
+    private Vector3 currPos;
+    private int aimCall = 0;
+    private float timeLastShot = 0f;
+    public float timeBetweenShots = 10f;
     
+    private Rigidbody rb;
     /**/
     private void Start() {
+
+        rb = GetComponent<Rigidbody>();
+        /*
         _target = GameObject.FindWithTag("Player");//GameObject.Find("1st-3rd Person Player");//slower than tag finder
         Alert(_target);
+        */
+
     }
-	
+    
 
     private void Update()
     {
@@ -99,7 +106,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
                 if(needsPath){ //&& timeSinceLastCall > 1f){
                     pathNodeIndex = 0;
                     if(isLookingForPath){//||Time.time - timeSinceGotPath < 1f
-                       return;
+                    return;
                     }
                     else if(IsPathBlocked(transform.position, _target.transform.position)){
                         PathRequestManager.RequestPath(transform.position,_target.transform.position, OnPathFound);
@@ -124,7 +131,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
                 FollowPath(speed);
                 break;
             }
-			
+            
             case DroneShooterState.Attack://could keep prev state, if different== first call
             {   
                 path = null;
@@ -143,21 +150,25 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
                         print("restarts chase");
                         _currentState = DroneShooterState.Chase;
                     }
-				}	
+                }	
                 else{
-					_currentState = DroneShooterState.Wander;
+                    _currentState = DroneShooterState.Wander;
                 }
                 
+                break;
+            }
+            case DroneShooterState.Out://dead when health = 0
+            {  
                 break;
             }
         }
         //print(_currentState);
     }
 
-    public void Alert(GameObject target){
-		_target = target;
+    public override void Alert(GameObject target){
+        _target = target;
         _currentState = DroneShooterState.Chase;
-	}
+    }
 
     public void OnPathFound(Vector3[] newPath, bool pathSuccessful) {
         if (pathSuccessful) {		
@@ -175,68 +186,68 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
         isLookingForPath = false;
     }
 
-	private void Aim(){
-		
-		//float Time.deltaTime;
-		if(aimCall == 0){
-			prevPos = _target.transform.position;
-			aimCall++;
-			return;
-		}
-		else if(aimCall == 1){
-			currPos = _target.transform.position;
-			Vector3 targetVelocity = (prevPos - currPos)/Time.deltaTime;
-		/*
+    private void Aim(){
+        
+        //float Time.deltaTime;
+        if(aimCall == 0){
+            prevPos = _target.transform.position;
+            aimCall++;
+            return;
+        }
+        else if(aimCall == 1){
+            currPos = _target.transform.position;
+            Vector3 targetVelocity = (prevPos - currPos)/Time.deltaTime;
+        /*
             ballistic.solve_ballistic_arc(projectileSpawn.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
-			Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
-		*/	//transform, snap to direction
+            Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
+        */	//transform, snap to direction
 
             Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
 
             double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
             double b = (double)(Vector3.Dot(_relPos, targetVelocity));
             double c = (double)(_relPos).sqrMagnitude;
-            double tRes1,tRes2; 
+            double tRes1 = -1d,tRes2 = -1d; 
             Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
             
 
-            if (tRes1 !=null && tRes1 > 0f){
+            if (tRes1 > 0f){
                 _direction = targetVelocity + (_relPos/(float)tRes1);
 
             }
-            else if(tRes2 !=null && tRes2 > 0f){
+            else if(tRes2 > 0f){
                 _direction = targetVelocity + (_relPos/(float)tRes2);
             }
 
 
             
-			prevPos = currPos;
-		}
+            prevPos = currPos;
+        }
         transform.LookAt(transform.position + _direction);
-		
-		
-	}
-	
-	
-	private void Shoot(Vector3 targetPos){//might need var later on, but not used rn
-		
-		Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
+        
+        
+    }
+    
+    
+    private void Shoot(Vector3 targetPos){//might need var later on, but not used rn
+        
+        Vector3 bulletPos = projectileSpawn.position;//projectile.transform.position
         Quaternion bulletDirection = Quaternion.LookRotation(projectileSpawn.transform.forward, Vector3.up);
-		
-		GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
+        
+        GameObject projectile = Instantiate(projectilePrefab, bulletPos, bulletDirection);
         //Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
-		projectile.GetComponent<Projectile>().Launch(_projectileSpeed);
+        projectile.GetComponent<Projectile>().Launch(_projectileSpeed);
 
-	}
-	
+    }
+    
     
     private bool IsPathBlocked(Vector3 startPos, Vector3 endPos){
         bool hitSomething = Physics.Linecast(startPos, endPos, _layerMask);
         return hitSomething;
     }
 
-    void GetIdlePath(){
-			
+    public override void GetIdlePath(){
+            
         path = new Vector3[2];
         path[0] = transform.position + Vector3.up * 0.25f;
         path[1] = transform.position + Vector3.down * 0.25f;
@@ -261,7 +272,7 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
     }
 
     void FollowPath(float _speed, bool _loops= false, bool _turns = true) {
-			
+            
         Vector3 targetWaypoint = path[pathNodeIndex];
         
         
@@ -291,8 +302,27 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
 
 
     public void TakeHit(){
-
+        //print("hitTurret");
+        if(health>1){
+            health = health-1;
+            print(health);
+        }
+        else{
+            _currentState = DroneShooterState.Out;
+            print("dead");
+            EnableRagdoll();
+        }
     }
+
+    // Let the rigidbody take control and detect collisions.
+    void EnableRagdoll()
+    {   /**/
+        rb.isKinematic = false;
+        rb.detectCollisions = true;
+        rb.useGravity = true;
+        
+    }
+
 
     public void OnDrawGizmos() {
         if (path != null) {
@@ -310,9 +340,6 @@ public class DroneShooter : MonoBehaviour//make child objects with different wea
             }
         }
     }
-		
-
-
-
+        
 }
 
