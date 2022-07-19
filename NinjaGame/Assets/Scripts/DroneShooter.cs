@@ -1,4 +1,6 @@
 using System.Linq;
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 /*public enum Team
@@ -60,10 +62,10 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     private void Start() {
 
         rb = GetComponent<Rigidbody>();
-        /*
+        
         _target = GameObject.FindWithTag("Player");//GameObject.Find("1st-3rd Person Player");//slower than tag finder
         Alert(_target);
-        */
+        /**/
 
     }
     
@@ -196,13 +198,18 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         }
         else if(aimCall == 1){
             currPos = _target.transform.position;
-            Vector3 targetVelocity = (prevPos - currPos)/Time.deltaTime;
+            Vector3 targetVelocity = (currPos - prevPos)/Time.deltaTime;
         /*
             ballistic.solve_ballistic_arc(projectileSpawn.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
             Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
         */	//transform, snap to direction
 
+
+
+            //solve in IENUM
+            /**/
             Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
+
 
             double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
             double b = (double)(Vector3.Dot(_relPos, targetVelocity));
@@ -211,11 +218,11 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
             Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
             
 
-            if (tRes1 > 0f){
+            if (tRes1 > 0){
                 _direction = targetVelocity + (_relPos/(float)tRes1);
 
             }
-            else if(tRes2 > 0f){
+            else if(tRes2 > 0){
                 _direction = targetVelocity + (_relPos/(float)tRes2);
             }
 
@@ -226,6 +233,55 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         transform.LookAt(transform.position + _direction);
         
         
+    }
+    
+    /**/
+    IEnumerator Aim(Vector3 targetPos) {
+
+        double tRes1 = -1d,tRes2 = -1d; 
+        float prevTime = Time.time;
+        aimCall = 0;
+        while (tRes1 <=0 && tRes2 <=0){
+            if(aimCall == 0){
+                prevPos = _target.transform.position;
+                prevTime = Time.time;
+                yield return new WaitForSeconds(0.075f);
+                aimCall++;
+            }
+            else if(aimCall == 1){
+                currPos = _target.transform.position;
+                Vector3 targetVelocity = (currPos - prevPos)/(Time.time-prevTime);
+            /*
+                ballistic.solve_ballistic_arc(projectileSpawn.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
+                Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
+            */	//transform, snap to direction
+
+
+
+                //solve in IENUM
+                /**/
+                Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
+
+
+                
+                    double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
+                    double b = (double)(Vector3.Dot(_relPos, targetVelocity));
+                    double c = (double)(_relPos).sqrMagnitude;
+                    
+                    Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
+                
+                
+
+                if (tRes1 > 0f){
+                    _direction = targetVelocity + (_relPos/(float)tRes1);
+
+                }
+                else if(tRes2 > 0f){
+                    _direction = targetVelocity + (_relPos/(float)tRes2);
+                }
+            }
+        }
+        yield return null;
     }
     
     

@@ -3,7 +3,17 @@ guid: 3e3efc3fc9465a0439c77b74b33c9324
 ModelImporter:
   serializedVersion: 20101
   internalIDToNameTable: []
-  externalObjects: {}
+  externalObjects:
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Body Side
+    second: {fileID: 2100000, guid: 19009ff03b513314b93cb823a8e0c84a, type: 2}
+  - first:
+      type: UnityEngine:Material
+      assembly: UnityEngine.CoreModule
+      name: Sharp Side
+    second: {fileID: 2100000, guid: 6a79da8810bb7344c9f88c877444f2b2, type: 2}
   materials:
     materialImportMode: 1
     materialName: 0

@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy parenting
 {
+	//public Transform spinPart;
 	public GameObject target;
 
 	////////////////explosion
@@ -16,7 +17,8 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 	float radius = 2f;
 	float speed = 5f;
 	private float speedWithAccel;
-	float turnSpeed = 45;
+	public float turnSpeed = 45;
+	public float turnTime = 4f;
 	Vector3[] path;
 	int targetIndex;
 
@@ -160,7 +162,7 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 			}
 			
 			//Vector3 direction = targetWaypoint-transform.position;//Vector3.ProjectOnPlane(Vector3.right, direction)
-			transform.Rotate(Vector3.right, (speed/radius)* Mathf.Rad2Deg*Time.deltaTime);//rotate while moving closer
+			//spinPart.Rotate(Vector3.right, (speed/radius)* Mathf.Rad2Deg*Time.deltaTime);//rotate while moving closer (set in sub spinning object)
 			transform.position = Vector3.MoveTowards(transform.position,targetWaypoint,speed * Time.deltaTime);
 			yield return null;
 
@@ -168,14 +170,18 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 	}
 
 	IEnumerator TurnToFace(Vector3 lookTarget) {
-		
-		Vector3 dirToLookTarget = (lookTarget - transform.position).normalized;
-		float targetAngle = 90 - Mathf.Atan2 (dirToLookTarget.z, dirToLookTarget.x) * Mathf.Rad2Deg;
 
-		while (Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) > 0.05f && Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) < 179.95f) {
+		Vector3 lookInit = transform.forward;
+		float startTime = Time.time;
+		Vector3 dirToLookTarget = (lookTarget - transform.position).normalized;
+		
+		//&& Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) < 179.95f
+		while (transform.forward != dirToLookTarget){//Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) > 0.05f ) {
+			float fracComplete = (Time.time - startTime) / turnTime;
+
+			Vector3 midLook = Vector3.Slerp(lookInit,dirToLookTarget, fracComplete);	//Mathf.SmoothStep(0f,1f,fracComplete)
 			
-			float angle = Mathf.MoveTowardsAngle (transform.eulerAngles.y, targetAngle, turnSpeed * Time.deltaTime);
-			transform.eulerAngles =new Vector3(transform.eulerAngles.x, angle, transform.eulerAngles.z);// Vector3.up * angle;
+			transform.rotation = Quaternion.LookRotation(midLook);
 			yield return null;
 		
 		//TODO: fix to make sure turns in shortest dir, as backwards and forwards should both work as "facing"
@@ -238,7 +244,9 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 				}
 			}
 		}
+		/**/
 		Gizmos.color = Color.red;
 		Gizmos.DrawLine(transform.position,transform.position+transform.forward*3f);
+		
 	}
 }
