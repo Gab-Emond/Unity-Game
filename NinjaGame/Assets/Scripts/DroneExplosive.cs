@@ -5,7 +5,7 @@ using UnityEngine;
 
 public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy parenting
 {
-	//public Transform spinPart;
+	public Transform spinPart;
 	public GameObject target;
 
 	////////////////explosion
@@ -162,7 +162,7 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 			}
 			
 			//Vector3 direction = targetWaypoint-transform.position;//Vector3.ProjectOnPlane(Vector3.right, direction)
-			//spinPart.Rotate(Vector3.right, (speed/radius)* Mathf.Rad2Deg*Time.deltaTime);//rotate while moving closer (set in sub spinning object)
+			spinPart.Rotate(spinPart.right, (speed/radius)* Mathf.Rad2Deg*Time.deltaTime);//rotate while moving closer (set in sub spinning object)
 			transform.position = Vector3.MoveTowards(transform.position,targetWaypoint,speed * Time.deltaTime);
 			yield return null;
 

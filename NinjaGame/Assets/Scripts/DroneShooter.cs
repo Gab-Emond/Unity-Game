@@ -57,6 +57,9 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     private float timeLastShot = 0f;
     public float timeBetweenShots = 10f;
     
+    IEnumerator aiming;
+    bool aimrunning;
+    bool lockOn = false;
     private Rigidbody rb;
     /**/
     private void Start() {
@@ -139,21 +142,66 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
                 path = null;
                 if (_target != null){
                     if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(transform.position, _target.transform.position)){
-                        Aim();//rotate towards shooting direction
+                        //print(lockOn);
+                        //if(aiming coroutine not running)
+                        if(aiming == null && aimrunning == false){//task.started == false, task.ended == false
+                            //start aiming coroutine (rotates toward shoot dir)
+                            //print("startedTask");
+                            aiming = Aim(_target.transform.position);
+                            StartCoroutine(aiming);
+                        }
+                        else if(lockOn && (Time.time - timeLastShot) > timeBetweenShots){//if task.ended == true
+                            transform.LookAt(transform.position + _direction);
+                            Shoot(_target.transform.position);
+                            timeLastShot = Time.time;
+                            StopCoroutine(aiming);
+                            aiming = null;
+                            aimrunning = false;
+                        }
+                        else{
+                            /**/
+                            Vector3 midLook = Vector3.Slerp(transform.forward,_direction, Time.time - timeLastShot);
+                            //transform.rotation = Quaternion.LookRotation(midLook);
+                            transform.LookAt(transform.position+ midLook);
+                            
+                            //TurnToFace(transform.position + _direction);
+                            
+                            //print(_direction);
+                            return;
+
+                            
+                        }
+                        
+                        /*float angle = Vector3.Angle(transform.forward,transform.position + _direction);
+                        print(angle);
+                        */
+                        //if(burstShot = 0 ){}
+                        /*
+                        else{
+
+                        }
+                        
+                        */
+
+
+                        /*Aim();//rotate towards shooting direction
                 
                         //print(Time.time-timeLastShot);
                         if(aimCall == 1 && (Time.time - timeLastShot) > timeBetweenShots){//loaded + aim
                             Shoot(_target.transform.position);
                             aimCall = 0;
                             timeLastShot = Time.time;
-                        }
+                        }*/
+                        
                     }
                     else{
+                        //stop aiming coroutine
                         print("restarts chase");
                         _currentState = DroneShooterState.Chase;
                     }
                 }	
                 else{
+                    //stop aiming coroutine
                     _currentState = DroneShooterState.Wander;
                 }
                 
@@ -189,7 +237,7 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     }
 
     private void Aim(){
-        
+        //_direction = Vector3.zero;
         //float Time.deltaTime;
         if(aimCall == 0){
             prevPos = _target.transform.position;
@@ -220,7 +268,7 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
 
             if (tRes1 > 0){
                 _direction = targetVelocity + (_relPos/(float)tRes1);
-
+               
             }
             else if(tRes2 > 0){
                 _direction = targetVelocity + (_relPos/(float)tRes2);
@@ -230,57 +278,57 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
             
             prevPos = currPos;
         }
-        transform.LookAt(transform.position + _direction);
+        //transform.LookAt(transform.position + _direction);
         
         
     }
     
     /**/
     IEnumerator Aim(Vector3 targetPos) {
-
+        aimrunning = true;
+        lockOn = false;
         double tRes1 = -1d,tRes2 = -1d; 
-        float prevTime = Time.time;
+        float prevTime;
         aimCall = 0;
-        while (tRes1 <=0 && tRes2 <=0){
-            if(aimCall == 0){
-                prevPos = _target.transform.position;
-                prevTime = Time.time;
-                yield return new WaitForSeconds(0.075f);
-                aimCall++;
-            }
-            else if(aimCall == 1){
-                currPos = _target.transform.position;
-                Vector3 targetVelocity = (currPos - prevPos)/(Time.time-prevTime);
-            /*
-                ballistic.solve_ballistic_arc(projectileSpawn.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
-                Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
-            */	//transform, snap to direction
+        //while (tRes1 <=0 && tRes2 <=0){}
+        
+        //print("aim");
+        //Debug.Log("Started Coroutine at timestamp : " + Time.time);
+        prevPos = _target.transform.position;
+        prevTime = Time.time;
+        yield return new WaitForSeconds(0.05f);//breaks out the loop
+        
+        
+        currPos = _target.transform.position;
+        Vector3 targetVelocity = (currPos - prevPos)/(Time.time-prevTime);
+        //Debug.Log("Finished Coroutine at timestamp : " + Time.time);
+        //print("targetVel: " + (targetVelocity));
 
+        Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
+        
+        double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
+        double b = (double)(Vector3.Dot(_relPos, targetVelocity));
+        double c = (double)(_relPos).sqrMagnitude;
+        
+        Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
+        //print(tRes1+" and"+tRes2);
+        
 
+        if (tRes1 > 0f){
+            _direction = targetVelocity + (_relPos/(float)tRes1);
+            //print(_direction);
 
-                //solve in IENUM
-                /**/
-                Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
-
-
-                
-                    double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
-                    double b = (double)(Vector3.Dot(_relPos, targetVelocity));
-                    double c = (double)(_relPos).sqrMagnitude;
-                    
-                    Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
-                
-                
-
-                if (tRes1 > 0f){
-                    _direction = targetVelocity + (_relPos/(float)tRes1);
-
-                }
-                else if(tRes2 > 0f){
-                    _direction = targetVelocity + (_relPos/(float)tRes2);
-                }
-            }
+            lockOn = true;
         }
+        else if(tRes2 > 0f){
+            _direction = targetVelocity + (_relPos/(float)tRes2);
+            //print(_direction);
+            lockOn = true;
+        }
+                
+            
+        
+        
         yield return null;
     }
     
@@ -315,6 +363,14 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     void TurnToFace(Vector3 lookTarget) {
         Vector3 dirToLookTarget = (lookTarget - transform.position).normalized;
         float targetAngle = 90 - Mathf.Atan2 (dirToLookTarget.z, dirToLookTarget.x) * Mathf.Rad2Deg;
+
+
+        /*Vector3 targetDir = lookTarget - transform.position;
+        float angleBetween = Vector3.Angle(transform.forward, targetDir);
+        */
+
+        //print("targetAngle: "+ targetAngle);
+        //print("newtargetAngle: " + Vector3.Angle(targetDir, transform.forward));
         float angle = Mathf.MoveTowardsAngle (transform.eulerAngles.y, targetAngle, turnSpeed * Time.deltaTime);
         transform.eulerAngles = Vector3.up * angle;      
     }
@@ -395,7 +451,13 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
                 }
             }
         }
+    
+        //Gizmos.color = Color.red;
+        //Gizmos.DrawLine(transform.position,transform.position + transform.forward*5);
+     
+    
     }
-        
+
+
 }
 
