@@ -2,18 +2,25 @@
 
 public class PlayerFadeOut : MonoBehaviour
 {
-    PlayerMovement playerMovement;
-    public Material opaqueMat;
-    public Material transparentMat;
-    public Renderer rend;
+    public enum VisState
+	{
+		Invisible,
+        Visible
+
+	}
+
+    public PlayerMovement playerMovement;
+    public Material playerMat;
+    //public Material transparentMat;
+    //public Renderer rend;
     private bool transparentPlayer = false;
-    float fadeSpeed = 85f;
-    float fadeAmount;
     Color objectColor;
-    
+    float fadeAmount;
+    bool keyPressed = false;
     void Start()
-    {
-        playerMovement = GetComponent<PlayerMovement>();
+    {   
+        fadeAmount = 0;
+        //playerMovement = GetComponent<PlayerMovement>();
 
     }
 
@@ -63,16 +70,43 @@ public class PlayerFadeOut : MonoBehaviour
     }
     */
 
+    void Update()
+    {
+        
+        if(playerMovement.IsGrounded && !playerMovement.IsGrappled){
 
+            if (playerMovement.IsCrouching){
+            
+                //keyheld
+                keyPressed = true;
+            
+            }
+            else{
+                //keyunpressed
+                keyPressed = false;
+            }
+
+        }
+        else{
+            keyPressed = false;
+        }
+
+        if(keyPressed){
+            fadeAmount = Mathf.Min(5, fadeAmount+2*Time.deltaTime);
+            playerMat.SetFloat("Vector_Invis", fadeAmount);
+        }
+        else if(fadeAmount!=0){
+            fadeAmount = Mathf.Max(0, fadeAmount-3*Time.deltaTime);
+            playerMat.SetFloat("Vector_Invis", fadeAmount);
+        }
+        
+           
+        
+    }
 
     
     void UpdateMaterial(bool transparent) {
-        if (transparent) {
-            rend.material = transparentMat;
-        }
-        else {
-            rend.material = opaqueMat;
-        }
+       
     }
 
 

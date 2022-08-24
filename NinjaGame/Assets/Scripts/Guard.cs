@@ -16,60 +16,188 @@ public class Guard : MonoBehaviour, IDamageable
 	public Transform pathHolder;
 	public LayerMask viewMask;
 	public Transform target;
+	int targetWaypointIndex = 1;
 	public float speed;
 	public float waitTime;
+
+	private Rigidbody rb;
 	
 	private float turnSpeed = 60;
 	public Light spotlight;
 	private Color originCol;
-
 	float playerVisibleTimer = 0;
 	float timeToSpotPlayer = 5f;
 	IEnumerator move;
+	bool moveRunning;
+	private EntityState currentState;
+
+	float rebootTime = 10f;
+	float rebootTimer;
+	bool standing = true;
+	bool gettingUp = false;
+	
+	
+
 	void Start()
 	{
+		rb = GetComponent<Rigidbody>();
+		rebootTimer = rebootTime;
 		originCol = spotlight.color;
+		
 
 		Vector3[] wayPoints = new Vector3[pathHolder.childCount];
 		
 		for (int i = 0; i< wayPoints.Length; i++){
 			wayPoints[i] = pathHolder.GetChild(i).position;
-			
 		}
+		transform.position = wayPoints [0]; //puts guard at first waypoint, otherwise no turn towards next
 		move = FollowPath(wayPoints);
+		currentState = EntityState.Guarding;
+		/*
 		StartCoroutine(move);//FollowPath(wayPoints) would also work
-
-
+		moveRunning = true;
+		*/
 	}
 
-	/*
+	/**/
 	void Update() {
 		//state machine
-		switch (switch_on)
+		print(currentState);
+		switch (currentState)
 		{
 			case EntityState.Guarding:
-
-			case EntityState.Searching:
-
-			case EntityState.Alerting:
-				StopCoroutine(followPath);
+				//if not running: start coroutine
+				if(!moveRunning){
+					StartCoroutine(move);
+					moveRunning = true;
+				}
+				if(spotlight.color != originCol){
+					spotlight.color = originCol;
+				}
+				if(CanSeePlayer(15,38)){
 			
-			case EntityState.Incapacitated:
+					currentState = EntityState.Alerting;
+					//playerVisibleTimer += Time.deltaTime*32;
+					
+					if(enemyController != null && enemyController.alarmSounded == false){
+						
+						enemyController.SoundAlarm();
+						//stop moving
+						//StopCoroutine(move);
+						//isStopped = true;
+					}
+				}
 
+				break;
+			case EntityState.Searching:
+				//addWayPoint
+				//goto waypoint
+				break;
+			case EntityState.Alerting:
+				if(moveRunning){
+					StopCoroutine(move);
+					moveRunning = false;
+				}
+				if(!CanSeePlayer(15,38)){
+					if(enemyController == null){
+						currentState = EntityState.Guarding;
+					}
+					else if( enemyController.alarmSounded == false){
+						currentState = EntityState.Guarding;
+					}		
+					//playerVisibleTimer -= Time.deltaTime;
+					
+				}
+
+				if(spotlight.color != Color.red){
+					spotlight.color = Color.red;
+				}
+				break;
+			case EntityState.Incapacitated:
+				if(moveRunning){
+					StopCoroutine(move);
+					moveRunning = false;
+				}
+				if(spotlight.color != Color.black){
+					spotlight.color = Color.black;
+				}
+
+				if(rebootTimer>0){
+					//print("ko");
+					rebootTimer -= Time.deltaTime;
+					standing = false;
+					gettingUp = false;
+				}
+				else{
+					//lift up guard
+					//point to Vector3.up
+					if(standing){
+						rebootTimer = rebootTime;
+						currentState = EntityState.Guarding;
+					}
+					else if(!gettingUp){
+						DisableRagdoll();
+						StartCoroutine(StandUp());
+						gettingUp = true;
+					}
+					
+				}
+				break;
 			default:
+				break;
 		}
 
 	}
-	*/
 
+	void EnableRagdoll()
+    {   /**/
+        rb.isKinematic = false;
+        rb.detectCollisions = true;
+        rb.useGravity = true;
+        
+    }
+	
+	void DisableRagdoll()
+    {   /**/
+        rb.isKinematic = true;
+        //rb.detectCollisions = false;
+        rb.useGravity = false;
+        
+    }
+	
+
+	IEnumerator StandUp(){
+		Vector3 lookTarget = Vector3.up;
+		float standUpTime = 0.25f;
+		Vector3 lookInit = transform.forward;
+		float startTime = Time.time;
+		Vector3 dirToLookTarget = Vector3.forward;//(lookTarget - transform.position).normalized;
+		
+		//&& Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) < 179.95f
+		while (transform.forward != dirToLookTarget){//Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) > 0.05f ) {
+			float fracComplete = (Time.time - startTime) / standUpTime;
+
+			Vector3 midLook = Vector3.Slerp(lookInit,dirToLookTarget, Mathf.SmoothStep(0f,1f,fracComplete));	
+			
+			transform.rotation = Quaternion.LookRotation(midLook);
+			yield return null;
+		
+		//TODO: fix to make sure turns in shortest dir, as backwards and forwards should both work as "facing"
+		
+		}
+		gettingUp = false;
+		standing = true;
+		yield return null;
+	}
 	IEnumerator FollowPath(Vector3[] waypoints) {//A coroutine is a function that can suspend its execution (yield) until the given YieldInstruction finishes.
 		Vector3 currentVelocity = Vector3.zero;
-		transform.position = waypoints [0]; //puts guard at first waypoint
-
-		int targetWaypointIndex = 1;
-		Vector3 targetWaypoint = waypoints [targetWaypointIndex];
-		transform.LookAt (targetWaypoint);
 		
+
+		
+		Vector3 targetWaypoint = waypoints [targetWaypointIndex];
+		//transform.LookAt (targetWaypoint);
+		yield return StartCoroutine (TurnToFace (targetWaypoint));
+
 		while (true) {
 			
 			if (transform.position == targetWaypoint){//(transform.position == targetWaypoint) {
@@ -98,37 +226,6 @@ public class Guard : MonoBehaviour, IDamageable
 			transform.eulerAngles = Vector3.up * angle;
 			yield return null;
 		}
-	}
-
-	void LateUpdate()
-	{	
-		
-		//float playerVisibleTimer = 0;
-		if(CanSeePlayer(15,38)){
-			
-			//playerVisibleTimer += Time.deltaTime*32;
-			spotlight.color = Color.red;
-			if(enemyController != null && enemyController.alarmSounded == false){
-				enemyController.SoundAlarm();
-				//stop moving
-				//StopCoroutine(move);
-				//isStopped = true;
-			}
-		}
-		
-		//else if recently changed
-			//restart moving afterwards
-			//return spotlight color
-
-		else{
-			//playerVisibleTimer -= Time.deltaTime;
-			spotlight.color = originCol;
-		}
-		//playerVisibleTimer = Mathf.Clamp (playerVisibleTimer, 0, timeToSpotPlayer);
-		
-		//spotlight.color = Color.Lerp(originCol, Color.red, playerVisibleTimer/timeToSpotPlayer);
-
-
 	}
 	
 
@@ -172,8 +269,13 @@ public class Guard : MonoBehaviour, IDamageable
 		
 	}
 
-	public void TakeHit(){
-
+	public void TakeHit(Vector3 damageDir, Vector3 damagePos){
+		//turn on rigidbody
+		currentState = EntityState.Incapacitated;
+		if(rb.isKinematic){
+			EnableRagdoll();
+		}
+		rb.AddForceAtPosition(damageDir, damagePos, ForceMode.Impulse);
     }
 
 

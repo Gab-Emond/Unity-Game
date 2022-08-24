@@ -196,7 +196,7 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 		Explode();
 	}
 
-	public void TakeHit(){
+	public void TakeHit(Vector3 damageDir, Vector3 damagePos){
 		print("hitBullet");
 		Explode();
 	}

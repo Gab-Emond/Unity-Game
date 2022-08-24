@@ -28,8 +28,9 @@ public class PlayerMovement : MonoBehaviour
     Vector2 inputs;
     private bool isGrounded;
     public bool IsGrounded => isGrounded;     // the Name property, getter
-
     bool isNextToWall;
+    bool isCrouching;
+    public bool IsCrouching => isCrouching;     //getter
     Vector3 wallNormal;
     Vector3 velocity = Vector3.zero;
     Vector3 move;
@@ -89,6 +90,7 @@ public class PlayerMovement : MonoBehaviour
         /*if(isNextToWall)
             print("wall" + wallNormal);
         */
+        isCrouching = playerInput.crouching;
     }
 
     private void FixedUpdate() {
@@ -99,12 +101,15 @@ public class PlayerMovement : MonoBehaviour
         
 
         if(isGrappled){
-            grapple(grappleTarget, grappleDistance, inputs);
+            grapple(grappleTarget, inputs);
         }
 		else if(isNextToWall && !isGrounded){//will return grounded on any slope
 			wallSlide(wallNormal, inputs);
 		}
         //else if(isNextToWall && isGrounded){}//boost jump up wall
+        else if(isCrouching && isGrounded){
+            crouch(inputs);
+        }
         else{
             normal(inputs);
         }
@@ -154,41 +159,24 @@ public class PlayerMovement : MonoBehaviour
         return frictVel;
     }
 
-    Vector3 Crouch(Vector3 velocity, float crouchSpeed, Vector2 inputs){ 
-        Vector3 v_current;
-        v_0 = velocity;
-        float time = Time.deltaTime;
-        float mu = 0.5f;
-
-        if(Vector2.SqrMagnitude(new Vector2(velocity.x,velocity.z))>(crouchSpeed*crouchSpeed)){
-            if(move.x*velocity.x < 0){
-                velocity.x += move.x;
+    void crouch(Vector2 inputs, float crouchSpeed =2f){ 
+        
+        /*if(isGrounded){
+            if(velocity.sqrMagnitude > 0f){
+                velocity += linFriction(velocity,5);
             }
-            else if(move.x*move.x>velocity.x*velocity.x){
-                velocity.x = move.x;
-            }
-            if(move.z*velocity.z < 0){
-                velocity.z += move.z;
-            }
-            else if(move.z*move.z>velocity.z*velocity.z){
-                velocity.z = move.z;
-            }
-                
         }
         else{
-            velocity.x = move.x;
-            velocity.z = move.z;
+            velocity.y += gravity*Time.deltaTime;//gravity negative
+            velocity += linFriction(new Vector3(velocity.x,0,velocity.z),5);
+        }*/
+
+        if(velocity.sqrMagnitude > 0f){
+            velocity += linFriction(velocity,5);
         }
 
 
-        if( v_0 != Vector3.zero){ 
-
-            v_current = Vector3.Lerp(v_0,Vector3.zero,mu*gravity*time); 
-            return v_current;
-        }
-        else{
-            return Vector3.zero;
-        } 
+        //v_current = Vector3.Lerp(v_0,Vector3.zero,mu*gravity*time); 
 
     }
 
@@ -247,20 +235,20 @@ public class PlayerMovement : MonoBehaviour
     
 
 
-    void grapple(Vector3 target, float distance, Vector2 inputs){//shorten over time?
+    void grapple(Vector3 target, Vector2 inputs){//shorten over time?
         
         Vector3 ropeVect; 
         Vector3 sideVect;
         Vector3 pullDir;
         float pullSpeed = 0;//"attraction"
         float angle;
-        float l = distance;
+        float l = grappleDistance;
         Vector3 correction;
         
         ropeVect = (target - transform.position);
         angle = Vector3.Angle(Vector3.up, ropeVect)* Mathf.Deg2Rad;
 
-        if ((transform.position-target).sqrMagnitude < distance*distance ) {//not in tension
+        if ((transform.position-target).sqrMagnitude < grappleDistance*grappleDistance ) {//not in tension
             normal(inputs);
             if (Input.GetButtonDown("Jump")){
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
@@ -270,10 +258,10 @@ public class PlayerMovement : MonoBehaviour
 			normal(inputs);
 
             ropeVect = ropeVect.normalized;
-            if((transform.position-target).sqrMagnitude >= distance*distance){
+            if((transform.position-target).sqrMagnitude >= grappleDistance*grappleDistance){
                 v_0 = velocity;
                 controller.enabled = false;
-                transform.position = target-ropeVect*distance;
+                transform.position = target-ropeVect*grappleDistance;
                 controller.enabled = true;
                 velocity = v_0;
                 
@@ -306,7 +294,7 @@ public class PlayerMovement : MonoBehaviour
             v_0 = velocity;
             
             controller.enabled = false;
-            transform.position = target-ropeVect*distance;
+            transform.position = target-ropeVect*grappleDistance;
             controller.enabled = true;
             
             velocity = v_0;
@@ -362,17 +350,21 @@ public class PlayerMovement : MonoBehaviour
                 velocity.y += Mathf.Sqrt(-2f* jumpHeight * gravity);//*ropeVect.y
                 
             }    
-            /*
-            if(Input.GetButtonDown("Shift")){
-                if(distance){
 
-                }
-            }
-            if(Input.GetButtonDown("Ctrl")){
-            }
-            */
             
-        }   
+        }
+
+        /**/   
+        if(playerInput.crouching){
+            grappleDistance += 5f*Time.deltaTime;
+            
+        }
+        else if(playerInput.run){
+            if(grappleDistance>0.5f){
+                grappleDistance -= 5f*Time.deltaTime;
+            }
+        }
+        
 
     }
 
@@ -422,7 +414,7 @@ public class PlayerMovement : MonoBehaviour
     public bool MovingTowardsWall(LayerMask layer, out Vector3 wallNormal, Vector2 inputs){ // heavily edited from colanderp "isnexttowall"
         float radius = 0.5f;//playerRadius, get
         move = (transform.right * inputs.x + transform.forward * inputs.y);
-		
+		//Vector3 PseudoDir = velocity/velocity.sqrMagnitude;
 		Vector3 top = transform.position+Vector3.up*0.4375f;//-height/4 //to start lower
         Vector3 bottom = transform.position-Vector3.up*0.35f;
         RaycastHit hit;

@@ -32,7 +32,6 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     [SerializeField] private LayerMask _layerMask;
     
     public float _attackRange = 6f;
-    
     private Vector3 _destination;
     private Quaternion _desiredRotation;
     private Vector3 _direction;
@@ -65,10 +64,10 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     private void Start() {
 
         rb = GetComponent<Rigidbody>();
-        
+        /*
         _target = GameObject.FindWithTag("Player");//GameObject.Find("1st-3rd Person Player");//slower than tag finder
         Alert(_target);
-        /**/
+        */
 
     }
     
@@ -82,7 +81,7 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
                 
                 if(path == null){
                     pathNodeIndex = 0;
-                    print("idle");
+                    //print("idle");
                     GetIdlePath();
                     return;
                 }
@@ -235,7 +234,7 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         }
         isLookingForPath = false;
     }
-
+    
     private void Aim(){
         //_direction = Vector3.zero;
         //float Time.deltaTime;
@@ -373,6 +372,10 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         //print("newtargetAngle: " + Vector3.Angle(targetDir, transform.forward));
         float angle = Mathf.MoveTowardsAngle (transform.eulerAngles.y, targetAngle, turnSpeed * Time.deltaTime);
         transform.eulerAngles = Vector3.up * angle;      
+
+
+        //other part, only height(x? component)
+
     }
 
     bool IsFacingTarget(Vector3 targetPoint){
@@ -413,7 +416,7 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     }
 
 
-    public void TakeHit(){
+    public void TakeHit(Vector3 damageDir, Vector3 damagePos){
         //print("hitTurret");
         if(health>1){
             health = health-1;
@@ -421,8 +424,11 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         }
         else{
             _currentState = DroneShooterState.Out;
-            print("dead");
-            EnableRagdoll();
+            if(rb.isKinematic){
+                print("dead");
+			    EnableRagdoll();
+            }
+            rb.AddForceAtPosition(damageDir, damagePos, ForceMode.Impulse);
         }
     }
 

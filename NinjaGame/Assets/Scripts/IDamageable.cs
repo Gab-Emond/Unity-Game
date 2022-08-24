@@ -10,5 +10,11 @@ An interface may define static methods, which must have an implementation
 public interface IDamageable
 {
     //void Damage(T damageTaken);
-    void TakeHit();
+    void TakeHit(Vector3 damageDir, Vector3 damagePos);
+}
+
+public interface IProjector
+{
+    //void Damage(T damageTaken);
+    void Shoot();
 }

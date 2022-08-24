@@ -80,7 +80,7 @@ public class Projectile : MonoBehaviour
             */
             IDamageable damagedEntity = hitInfo.collider.gameObject.GetComponent<IDamageable>();
             if(damagedEntity != null){
-                damagedEntity.TakeHit();
+                damagedEntity.TakeHit(transform.position-prevPos, hitInfo.point);
             }
 
             transform.position = hitInfo.point;
