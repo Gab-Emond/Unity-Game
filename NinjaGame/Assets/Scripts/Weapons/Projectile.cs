@@ -15,7 +15,7 @@ public class Projectile : MonoBehaviour
     //Assignables
     public Rigidbody rb;
     public GameObject explosion;
-    public LayerMask whatIsEnemies;
+    public LayerMask whatIsEntities;
     
     //Stats
     [Range(0f,1f)]
@@ -28,8 +28,12 @@ public class Projectile : MonoBehaviour
     public float explosionForce;
 
     //Lifetime
-    public float maxLifetime = 10f;
+    public float maxLifetime = 60f;
+    public float hitLifetime = 10f;
     public bool explode = false;
+    public bool sticksToTarget;//todo;toggle if object stays in place or no
+
+
     PhysicMaterial physics_mat;
 
 
@@ -37,10 +41,10 @@ public class Projectile : MonoBehaviour
     private RaycastHit hitInfo;
     public GameObject impactEffect;
     
-    
+    private Collider thisCollider;
     
     public string ignoreTag;
-
+    bool hitSomething;
     
     
     //trailrenderer? selon si on veut
@@ -52,57 +56,69 @@ public class Projectile : MonoBehaviour
         prevPos = transform.position;
         Setup();
         //StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
+        Destroy(gameObject,maxLifetime);
         Launch(100f);
 
     }
     // Update is called once per frame
     void Update()
-    {
-        //float step = speed*time.deltaTime;
-        //transform.position = transform.position + transform.forward*step; new Vector3( * movementSpeed * Time.deltaTime, verticalInput * movementSpeed * Time.deltaTime, 0);
-        if (Physics.Linecast(prevPos, transform.position, out hitInfo)){
+    {   
 
-            //projectile hit something
+        if(!hitSomething){
+        
+            //float step = speed*time.deltaTime;
+            //transform.position = transform.position + transform.forward*step; new Vector3( * movementSpeed * Time.deltaTime, verticalInput * movementSpeed * Time.deltaTime, 0);
+            if (Physics.Linecast(prevPos, transform.position, out hitInfo)){
 
-            //Don't count collisions with self(?)
-            //if (hitInfo.collider.CompareTag("Bullet")) return;
-            
-            //Don<t count collisions with (own?) player:
-            if (hitInfo.collider.CompareTag("Player")) return;
-            /*
-            if(hitInfo.collider.gameObject.GetComponent<DroneExplosive>() != null){
-                hitInfo.collider.gameObject.GetComponent<DroneExplosive>().TakeHit();
+                //projectile hit something
+
+                //Don't count collisions with self(?)
+                //if (hitInfo.collider.CompareTag("Bullet")) return;
+                
+                //Don<t count collisions with (own?) player:
+                if (hitInfo.collider.CompareTag("Player")) return;
+                /*
+                if(hitInfo.collider.gameObject.GetComponent<DroneExplosive>() != null){
+                    hitInfo.collider.gameObject.GetComponent<DroneExplosive>().TakeHit();
+                }
+
+                if(hitInfo.collider.gameObject.GetComponent<DroneShooter>() != null){
+                    hitInfo.collider.gameObject.GetComponent<DroneShooter>().TakeHit();
+                }
+                */
+                IDamageable damagedEntity = hitInfo.collider.gameObject.GetComponent<IDamageable>();
+                if(damagedEntity != null){
+                    damagedEntity.TakeHit(transform.position-prevPos, hitInfo.point);
+                }
+                //note: sendmessage("takehit") couldve worked too, without requiring idamageable, no error if doesnt have
+
+
+                hitSomething = true;
+                
+                //rb.constraints = RigidbodyConstraints.FreezeAll;
+                rb.isKinematic = true;
+                rb.detectCollisions = false;
+                transform.position = hitInfo.point;
+                this.transform.parent = hitInfo.transform;
+                
+                if(explode){
+                    Explode();
+                }
+                else{
+                    //hitInfo
+                    //StartCoroutine(DestroyBulletAfterTime(gameObject, hitLifetime));
+                    Destroy(gameObject,hitLifetime);
+                    //print("hit");
+                }
+
+
             }
-
-            if(hitInfo.collider.gameObject.GetComponent<DroneShooter>() != null){
-                hitInfo.collider.gameObject.GetComponent<DroneShooter>().TakeHit();
-            }
-            */
-            IDamageable damagedEntity = hitInfo.collider.gameObject.GetComponent<IDamageable>();
-            if(damagedEntity != null){
-                damagedEntity.TakeHit(transform.position-prevPos, hitInfo.point);
-            }
-
-            transform.position = hitInfo.point;
-            rb.constraints = RigidbodyConstraints.FreezeAll;
-            this.transform.parent = hitInfo.transform;
-            //if has rigid body
-            if(explode){
-                Explode();
-            }
-            else{
-                //hitInfo
-                StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
-                //print("hit");
-            }
-
-
         }
 
     }
 
     private void FixedUpdate() {
-        if(useGravity){
+        if(useGravity && !hitSomething){
             rb.AddForce(MathUtility.LinFriction(Vector3.Project(transform.up, rb.velocity)));    //, ForceMode.Acceleration vs Impulse
         }
     }
@@ -141,20 +157,21 @@ public class Projectile : MonoBehaviour
             Instantiate(explosion, transform.position, Quaternion.identity);
 
             //Check for enemies 
-            Collider[] enemies = Physics.OverlapSphere(transform.position, explosionRange, whatIsEnemies);
-            for (int i = 0; i < enemies.Length; i++){
+            Collider[] entities = Physics.OverlapSphere(transform.position, explosionRange, whatIsEntities);
+            for (int i = 0; i < entities.Length; i++){
                 //Get component of enemy and call Take Damage
 
                 //Just an example!
                 ///enemies[i].GetComponent<ShootingAi>().TakeDamage(explosionDamage);
 
                 //Add explosion force (if enemy has a rigidbody)
-                if (enemies[i].GetComponent<Rigidbody>())
-                    enemies[i].GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, explosionRange);
+                if (entities[i].GetComponent<Rigidbody>())
+                    entities[i].GetComponent<Rigidbody>().AddExplosionForce(explosionForce, transform.position, explosionRange);
             }
         }
         //Add a little delay, just to make sure everything works fine
-        StartCoroutine(DestroyBulletAfterTime(gameObject, 0.0625f));
+        //StartCoroutine(DestroyBulletAfterTime(gameObject, 0.0625f));
+        Destroy(gameObject,0.0625f);
     }
     
     
@@ -181,6 +198,7 @@ public class Projectile : MonoBehaviour
 
         //Set gravity
         rb.useGravity = useGravity;
+        hitSomething = false;
     }
 
     /// Just to visualize the explosion range

@@ -34,6 +34,10 @@ public class Grapple : MonoBehaviour {
         if(Input.GetButtonDown("Jump")){
             StopGrapple();
         }
+        
+    }
+
+    private void FixedUpdate() {
         if(grappling){//or change by making child of object attached to
             grapplePoint = grappledObject.position + grappledDecal;
             playerMov.grappleTarget = grapplePoint;
@@ -50,7 +54,7 @@ public class Grapple : MonoBehaviour {
     /// </summary>
     void StartGrapple() {
         RaycastHit hit;
-        if (Physics.Raycast(camera.position, camera.forward, out hit, maxDistance, whatIsGrappleable)) {
+        if (Physics.Raycast(camera.position, camera.forward, out hit, maxDistance, whatIsGrappleable, QueryTriggerInteraction.Ignore)) {
             grappling = true;
             grapplePoint = hit.point;
             grappledObject = hit.transform;
@@ -72,10 +76,12 @@ public class Grapple : MonoBehaviour {
     /// <summary>
     /// Call whenever we want to stop a grapple
     /// </summary>
-    void StopGrapple() {
+    public void StopGrapple() {
         grappling = false;
         lRenderer.positionCount = 0;
         playerMov.StopGrapple();
+
+        //use delegate and event to join playermovement stop grapple
     }
 
     

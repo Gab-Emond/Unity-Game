@@ -84,13 +84,6 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 						return;
 					}
 				}
-
-				
-				
-				if() //(Vector3.Distance(transform.position, _target.transform.position) < _attackRange)
-				{
-					//lostTarget?
-				}
 				
 				break;
 			}
@@ -163,6 +156,9 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 			
 			//Vector3 direction = targetWaypoint-transform.position;//Vector3.ProjectOnPlane(Vector3.right, direction)
 			spinPart.Rotate(spinPart.right, (speed/radius)* Mathf.Rad2Deg*Time.deltaTime);//rotate while moving closer (set in sub spinning object)
+			
+			//todo, rotate with animation
+			
 			transform.position = Vector3.MoveTowards(transform.position,targetWaypoint,speed * Time.deltaTime);
 			yield return null;
 

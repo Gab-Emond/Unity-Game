@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class ObjectPool : MonoBehaviour
 {
-    public static ObjectPool SharedInstance;//singleton;Garantir qu’une classe n’a qu’une seule instance et offre un point d’accès global(ift 2255,  ch 4.5)
+    public static ObjectPool SharedInstance;//singleton; Garantir qu’une classe n’a qu’une seule instance et offre un point d’accès global(ift 2255,  ch 4.5)
     public List<GameObject> pooledObjects;
     public GameObject objectToPool;
     public int amountToPool;
@@ -23,12 +23,6 @@ public class ObjectPool : MonoBehaviour
             tmp.SetActive(false);
             pooledObjects.Add(tmp);
         }
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-        
     }
 
     public GameObject GetPooledObject(){

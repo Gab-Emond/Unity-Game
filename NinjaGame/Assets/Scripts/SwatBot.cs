@@ -7,19 +7,6 @@ using UnityEngine;
 public class SwatBot : MonoBehaviour//make child objects with different weapon types?
 {
 
-    public enum SwatState
-    {
-        Wander,
-        Chase,
-        Attack,
-        Out
-    }
-
-    public enum WeaponType{
-        Explosive,
-        Regular,
-        Bursts
-    }
     //cant fly, can jump?
 
     //navmesh using
@@ -28,15 +15,14 @@ public class SwatBot : MonoBehaviour//make child objects with different weapon t
     //projectile 
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
-    private SwatState _thisState;
-    private WeaponType _thisWeapon;
-    public WeaponType ThisWeapon    // the Name property
+    private WeaponDataSO thisWeaponData;
+    public WeaponDataSO ThisWeaponData    // the Name property
     {
-        get => _thisWeapon;
-        set => _thisWeapon = value;
+        get => thisWeaponData;
+        set => thisWeaponData = value;
     }
 
-    bool aimrunning;
+    bool aimRunning;
     bool lockOn;
     GameObject _target;
     Vector3 _direction;
@@ -44,21 +30,27 @@ public class SwatBot : MonoBehaviour//make child objects with different weapon t
     Vector3 currPos;
     int aimCall;
     float _projectileSpeed;
+    IEnumerator aiming;
 
     private void Start() {
-        if(_thisWeapon == null){//no weapon
+
+        if(thisWeaponData == null){//no weapon
             RandWeapon();
         }
 
     }
 
+    private void Update() {
+        
+    }
+
     void RandWeapon(){
         //_thisWeapon = (WeaponType)Random.Range(0, Enum.GetValues(typeof(WeaponType)).Cast<WeaponType>().Max());//returns a weapon from the amount available
-        _thisWeapon = (WeaponType)UnityEngine.Random.Range(0, 2);
+        //_thisWeapon = (WeaponType)UnityEngine.Random.Range(0, 2);
     }
 
     IEnumerator Aim(Vector3 targetPos) {
-        aimrunning = true;
+        aimRunning = true;
         lockOn = false;
         double tRes1 = -1d,tRes2 = -1d; 
         float prevTime;

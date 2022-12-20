@@ -1,4 +1,6 @@
-﻿using UnityEngine;
+﻿using System.Collections;
+using System.Collections.Generic;
+using UnityEngine;
 
 public class PlayerFadeOut : MonoBehaviour
 {
@@ -13,14 +15,25 @@ public class PlayerFadeOut : MonoBehaviour
     public Material playerMat;
     //public Material transparentMat;
     //public Renderer rend;
-    private bool transparentPlayer = false;
+    // private bool transparentPlayer = false;
+    // public bool TransparentPlayer{
+    //     get => transparentPlayer;
+    // }
+
+    public GameObject playerColliderObj;
+    public int invis_Layer;
+    private int init_Layer;
+    bool layerIsChanged;
+
     Color objectColor;
     float fadeAmount;
-    bool keyPressed = false;
+    bool shouldFade = false;
     void Start()
     {   
         fadeAmount = 0;
         //playerMovement = GetComponent<PlayerMovement>();
+        init_Layer = playerColliderObj.layer;
+        layerIsChanged = false;
 
     }
 
@@ -78,41 +91,57 @@ public class PlayerFadeOut : MonoBehaviour
             if (playerMovement.IsCrouching){
             
                 //keyheld
-                keyPressed = true;
+                shouldFade = true;
             
             }
             else{
                 //keyunpressed
-                keyPressed = false;
+                shouldFade = false;
             }
 
         }
         else{
-            keyPressed = false;
+            shouldFade = false;
         }
 
-        if(keyPressed){
+        if(shouldFade){
             fadeAmount = Mathf.Min(5, fadeAmount+2*Time.deltaTime);
             playerMat.SetFloat("Vector_Invis", fadeAmount);
+            if(!layerIsChanged){
+                playerColliderObj.layer = invis_Layer;
+                layerIsChanged = true;
+            }
+            
         }
-        else if(fadeAmount!=0){
-            fadeAmount = Mathf.Max(0, fadeAmount-3*Time.deltaTime);
-            playerMat.SetFloat("Vector_Invis", fadeAmount);
+        else {
+            if(fadeAmount!=0){
+                fadeAmount = Mathf.Max(0, fadeAmount-3*Time.deltaTime);
+                playerMat.SetFloat("Vector_Invis", fadeAmount);
+            }
+            if(layerIsChanged){
+                playerColliderObj.layer = init_Layer;
+                layerIsChanged = false;
+            }
         }
         
-           
+        
+        //else layer = init_layer
+        
         
     }
 
     
-    void UpdateMaterial(bool transparent) {
+    // void ChangeLayer(){
+    //     //start: get initLayer = player.layer;
+    //     //invis: player.layer = invisibleLayer;
+    //     //end: player.layer = initLayer;
+    // }
+
+    // void UpdateMaterial(bool transparent) {
        
-    }
+    // }
 
 
-    public bool TransparentPlayer{
-        get => transparentPlayer;
-    }
-
+    
 
 }

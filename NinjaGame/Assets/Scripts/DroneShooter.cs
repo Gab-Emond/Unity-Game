@@ -2,7 +2,6 @@ using System.Linq;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
-
 /*public enum Team
 {
     Red,
@@ -21,6 +20,9 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
 {
     
     //public Fts ballistic;
+
+    // Drone Shield
+    public Shield shield;
 
     //projectile 
     public GameObject projectilePrefab;
@@ -52,13 +54,13 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
     //target movement
     private Vector3 prevPos;
     private Vector3 currPos;
-    private int aimCall = 0;
     private float timeLastShot = 0f;
     public float timeBetweenShots = 10f;
     
     IEnumerator aiming;
     bool aimrunning;
     bool lockOn = false;
+    public bool Lockon => lockOn;
     private Rigidbody rb;
     /**/
     private void Start() {
@@ -107,10 +109,19 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
                 bool needsPath = (path == null)||(path[path.Length-1]-_target.transform.position).sqrMagnitude > _attackRange*_attackRange || IsPathBlocked(path[path.Length-1], _target.transform.position);
                 
 
+
+                //var lastPos = seeTarget? target.pos: lastPos; //store last seen target pos
+                //needs path = (path == null)||(at last path node index);
+                //if at last node and cant see player,go check lastPos, then if not seen, back to idle
+
+                
+
+                
+
                 if(needsPath){ //&& timeSinceLastCall > 1f){
                     pathNodeIndex = 0;
                     if(isLookingForPath){//||Time.time - timeSinceGotPath < 1f
-                    return;
+                        return;
                     }
                     else if(IsPathBlocked(transform.position, _target.transform.position)){
                         PathRequestManager.RequestPath(transform.position,_target.transform.position, OnPathFound);
@@ -139,70 +150,41 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
             case DroneShooterState.Attack://could keep prev state, if different== first call
             {   
                 path = null;
-                if (_target != null){
-                    if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(transform.position, _target.transform.position)){
-                        //print(lockOn);
-                        //if(aiming coroutine not running)
-                        if(aiming == null && aimrunning == false){//task.started == false, task.ended == false
-                            //start aiming coroutine (rotates toward shoot dir)
-                            //print("startedTask");
-                            aiming = Aim(_target.transform.position);
-                            StartCoroutine(aiming);
-                        }
-                        else if(lockOn && (Time.time - timeLastShot) > timeBetweenShots){//if task.ended == true
-                            transform.LookAt(transform.position + _direction);
-                            Shoot(_target.transform.position);
-                            timeLastShot = Time.time;
-                            StopCoroutine(aiming);
-                            aiming = null;
-                            aimrunning = false;
-                        }
-                        else{
-                            /**/
-                            Vector3 midLook = Vector3.Slerp(transform.forward,_direction, Time.time - timeLastShot);
-                            //transform.rotation = Quaternion.LookRotation(midLook);
-                            transform.LookAt(transform.position+ midLook);
-                            
-                            //TurnToFace(transform.position + _direction);
-                            
-                            //print(_direction);
-                            return;
-
-                            
-                        }
-                        
-                        /*float angle = Vector3.Angle(transform.forward,transform.position + _direction);
-                        print(angle);
-                        */
-                        //if(burstShot = 0 ){}
-                        /*
-                        else{
-
-                        }
-                        
-                        */
-
-
-                        /*Aim();//rotate towards shooting direction
+                Vector3 midLook = transform.forward;
+                shield.turnOff();
                 
-                        //print(Time.time-timeLastShot);
-                        if(aimCall == 1 && (Time.time - timeLastShot) > timeBetweenShots){//loaded + aim
-                            Shoot(_target.transform.position);
-                            aimCall = 0;
-                            timeLastShot = Time.time;
-                        }*/
+                if ((transform.position-_target.transform.position).sqrMagnitude < _attackRange*_attackRange && !IsPathBlocked(transform.position, _target.transform.position)){
+                    
+                    if((Time.time - timeLastShot) > timeBetweenShots && isInShootArea(_target.transform.position,5f)){//if task.ended == true
+                        
+                        //use Invoke(); for time next shot
+                        Shoot(transform.position+ midLook);
+                        timeLastShot = Time.time;
                         
                     }
                     else{
-                        //stop aiming coroutine
-                        print("restarts chase");
-                        _currentState = DroneShooterState.Chase;
+                        //takes 1sec to reach, by definition
+                        midLook = Vector3.Slerp(transform.forward, _target.transform.position-transform.position, Time.time - timeLastShot);
+                        //transform.rotation = Quaternion.LookRotation(midLook);
+                        transform.LookAt(transform.position+ midLook);
+                        
+                        //TurnToFace(transform.position + _direction);
+                        
+                        //print(_direction);
+                        return;
+
+                        
                     }
-                }	
+                    
+                }
                 else{
                     //stop aiming coroutine
-                    _currentState = DroneShooterState.Wander;
+                    shield.turnOn();
+                    print("restarts chase");
+                    _currentState = DroneShooterState.Chase;
                 }
+                
+               
                 
                 break;
             }
@@ -235,60 +217,12 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         isLookingForPath = false;
     }
     
-    private void Aim(){
-        //_direction = Vector3.zero;
-        //float Time.deltaTime;
-        if(aimCall == 0){
-            prevPos = _target.transform.position;
-            aimCall++;
-            return;
-        }
-        else if(aimCall == 1){
-            currPos = _target.transform.position;
-            Vector3 targetVelocity = (currPos - prevPos)/Time.deltaTime;
-        /*
-            ballistic.solve_ballistic_arc(projectileSpawn.position, projectileSpeed, randomPos, blockVelocity, gravity, shootingDir, shootingDir2, shootingDir3);
-            Vector3 shootDir = shootScript(currPos, transform.position, targetVelocity, bulletVelocity)[0];
-        */	//transform, snap to direction
-
-
-
-            //solve in IENUM
-            /**/
-            Vector3 _relPos = (_target.transform.position-projectileSpawn.position);
-
-
-            double a = (double)(targetVelocity.sqrMagnitude- _projectileSpeed*_projectileSpeed); 
-            double b = (double)(Vector3.Dot(_relPos, targetVelocity));
-            double c = (double)(_relPos).sqrMagnitude;
-            double tRes1 = -1d,tRes2 = -1d; 
-            Fts.SolveQuadric(a, b, c, out tRes1, out tRes2);
-            
-
-            if (tRes1 > 0){
-                _direction = targetVelocity + (_relPos/(float)tRes1);
-               
-            }
-            else if(tRes2 > 0){
-                _direction = targetVelocity + (_relPos/(float)tRes2);
-            }
-
-
-            
-            prevPos = currPos;
-        }
-        //transform.LookAt(transform.position + _direction);
-        
-        
-    }
-    
     /**/
     IEnumerator Aim(Vector3 targetPos) {
         aimrunning = true;
         lockOn = false;
         double tRes1 = -1d,tRes2 = -1d; 
         float prevTime;
-        aimCall = 0;
         //while (tRes1 <=0 && tRes2 <=0){}
         
         //print("aim");
@@ -330,7 +264,14 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         
         yield return null;
     }
-    
+
+    bool isInShootArea(Vector3 targetPos, float gapLengthSqr){
+        Vector3 rayToTarget = Vector3.ProjectOnPlane(projectileSpawn.position - targetPos, projectileSpawn.transform.forward);
+        
+        return (rayToTarget.sqrMagnitude <= gapLengthSqr); 
+    }
+
+
     
     private void Shoot(Vector3 targetPos){//might need var later on, but not used rn
         
@@ -348,6 +289,47 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         bool hitSomething = Physics.Linecast(startPos, endPos, _layerMask);
         return hitSomething;
     }
+
+//////////////////////////todo: fix
+    bool CanSeeTarget(float viewDistance, float viewAngle, Vector3 target) {
+		RaycastHit hitInfo;
+		Vector3 vectResult;
+		bool canSee = false;
+		if ((transform.position-target).sqrMagnitude < viewDistance*viewDistance) {//compares distance faster, see https://docs.unity3d.com/ScriptReference/Vector3-sqrMagnitude.html
+			
+			Vector3 dirToPlayer = (target - transform.position);//find the vector pointing from our position to the target
+			float angleBetweenGuardAndPlayer = Vector3.Angle(transform.forward, dirToPlayer);
+			if(angleBetweenGuardAndPlayer< viewAngle / 2f){
+				
+				vectResult = Vector3.Cross(Vector3.up,dirToPlayer);
+				if(!Physics.Linecast(transform.position, target,_layerMask)){//if nothing is blocking the player (center)
+					canSee= true;
+					//Debug.DrawLine (transform.position, target.position, Color.red);
+				}
+				//Debug.DrawLine (target.position-vectResult, target.position, Color.yellow);
+				
+				else if(Physics.Linecast(target-vectResult, target, out hitInfo)){//if nothing is blocking the player (left)
+					
+					if(!Physics.Linecast(transform.position, hitInfo.point,_layerMask)){
+						canSee = true;
+						//Debug.DrawLine(transform.position, hitInfo.point, Color.green);
+					}
+				}
+				else if(Physics.Linecast(target+vectResult, target, out hitInfo)){//if nothing is blocking the player (right)
+					
+					if(!Physics.Linecast(transform.position, hitInfo.point,_layerMask)){
+						canSee = true;
+						//Debug.DrawLine(transform.position, hitInfo.point, Color.green);
+					}
+				}
+				
+				
+			
+			}
+		}
+		return canSee;
+		
+	}
 
     public override void GetIdlePath(){
             
@@ -392,8 +374,6 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
         
         
         if (transform.position == targetWaypoint){//to turn, must be at waypoint
-            
-            /////////////////////////Errror sets next target without having turned           
             
             pathNodeIndex = (pathNodeIndex + 1)%path.Length;
             //transform.position = Vector3.MoveTowards(transform.position,targetWaypoint, speed * Time.deltaTime);

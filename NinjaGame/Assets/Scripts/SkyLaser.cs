@@ -35,6 +35,7 @@ public class SkyLaser : MonoBehaviour
 
     private SatState currentState = SatState.Primed;
     bool shooting;
+    bool focusing= false;
     public GameObject explosion;
 
     //time.Time: returns clock time, delta time not needed
@@ -60,7 +61,10 @@ public class SkyLaser : MonoBehaviour
 
             }
             case SatState.Focusing:{
-                FocusOnTarget(startTime, target.position);
+                //FocusOnTarget(startTime, target.position);
+                if(!focusing){
+                    StartCoroutine(IFocusOnTarget(startTime, target.position));
+                }
                 if(beamRadius == beamRadiusFinal){
                     startTime = Time.time;
                     currentState = SatState.Shooting;
@@ -73,7 +77,6 @@ public class SkyLaser : MonoBehaviour
                     StartCoroutine(FocusOnTarget(startTime, target.position));
 
                 }
-                
                 
                 */
 
@@ -156,30 +159,26 @@ public class SkyLaser : MonoBehaviour
         
     }
 
-    void FocusOnTarget(float startTime, Vector3 position){
-        
-        /*
-        RaycastHit hitInfo;
 
-        if(Physics.Raycast(new Vector3(position.x, 200,position.z), Vector3.down, out hitInfo, 100, mask, QueryTriggerInteraction.Ignore)){
-        }
-        */
-
-
-        float currTime = (Time.time - startTime) / chargeUpTimeDuration;
-        beamRadius = Mathf.SmoothStep(beamRadiusInit, beamRadiusFinal, currTime); 
-
-        //SmoothStep(float from, float to, float t); 
-        //SmoothDamp(float current, float target, ref float currentVelocity, float smoothTime, float maxSpeed = Mathf.Infinity, float deltaTime = Time.deltaTime); 
-        
+    IEnumerator IFocusOnTarget(float startTime, Vector3 position){
+        focusing = true;
         float step = laserSpeed*Time.deltaTime;
+        float currTime;
+        while(beamRadius != beamRadiusFinal){
 
-        laserCenter = Vector3.MoveTowards(laserCenter, position, step);
+            currTime = (Time.time - startTime) / chargeUpTimeDuration;
+            beamRadius = Mathf.SmoothStep(beamRadiusInit, beamRadiusFinal, currTime); 
+            
+            laserCenter = Vector3.MoveTowards(laserCenter, position, step);
 
-        transform.position = new Vector3(laserCenter.x, beamRadius,laserCenter.z);
+            transform.position = new Vector3(laserCenter.x, beamRadius,laserCenter.z);
+            yield return null;
+        }
         //line renderer, use radius and center of beam
-
+        focusing = false;
+        yield return null;
     }
+
 
     void Recharging(){
         

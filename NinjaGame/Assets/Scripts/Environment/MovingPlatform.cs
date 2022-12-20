@@ -72,30 +72,16 @@ public class MovingPlatform : MonoBehaviour
             
             transform.position = Vector3.Lerp(waypoints[prevWaypointIndex], targetWaypoint, Mathf.SmoothStep(0f,1f,t));//change to math.utility
             
-            /*
-            Vector3 p0 = Vector3.Lerp(waypoints[prevWaypointIndex], targetWaypoint, t);
-            Vector3 p1 = Vector3.Lerp((targetWaypoint+waypoints[prevWaypointIndex])/2f, targetWaypoint, t);
-            transform.position = Vector3.Lerp(p0, p1, t);
-            */
         }
 
-        /*
-        else if((transform.position-targetWaypoint).sqrMagnitude <= 0.03125){
-            transform.position = targetWaypoint;
-        }
-        else if((transform.position-targetWaypoint).sqrMagnitude <= 2f){
-            transform.position = Vector3.Lerp(transform.position, targetWaypoint, speed * Time.deltaTime);
-        }
-        else{
-            transform.position = Vector3.SmoothDamp(transform.position, targetWaypoint, ref velocity, 0.5f);//smoother than movetowards, sorta gauss func				}
-        }*/
+        
         
     }
 
     //character controller issue: https://docs.unity3d.com/ScriptReference/Physics-autoSyncTransforms.html
     private void OnTriggerEnter(Collider other) {
         if(other.tag == "Player" || other.attachedRigidbody !=null){
-            other.transform.parent = transform;
+            other.transform.SetParent(transform, true); 
         }
     }
     //without parenting;
@@ -115,7 +101,7 @@ public class MovingPlatform : MonoBehaviour
     */
     private void OnTriggerExit(Collider other) {
          if(other.tag == "Player" || other.attachedRigidbody !=null){
-            other.transform.parent = null;
+            other.transform.SetParent(null);
         }
     }
     

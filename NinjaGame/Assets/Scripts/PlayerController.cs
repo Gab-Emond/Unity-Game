@@ -5,9 +5,6 @@ using UnityEngine;
 using UnityEngine.Events;
 //the brain
 
-public enum Status { idle, walking, crouching, sprinting, sliding, climbing, wallRunning, vaulting, grabbedLedge, climbingLedge, grappling}
-public class StatusEvent : UnityEvent<Status> {}//unity event constructor class(the one to go from class to object)
-
 //If you wish to use a generic UnityEvent type you must override the class type.
 //https://docs.unity3d.com/ScriptReference/Events.UnityEvent.html
 
@@ -17,54 +14,53 @@ public class PlayerControl : MonoBehaviour
 {
 
     //note: headers: for in the unity editor, adds a title for things to control 
-    public Status status;
-    public StatusEvent onStatusChange;
 
     public PlayerInfo info;
     PlayerMovement movement;
     PlayerInput playerInput;
-
     MouseLook mouseLook;
 
-    float[] inputDir = new float[2];
+    Grapple playerGrapple;
+
+    Animator animator;
 
     void Start()
     {
         playerInput = GetComponent<PlayerInput>();
         movement = GetComponent<PlayerMovement>();
         mouseLook = GetComponent<MouseLook>();
-
+        playerGrapple = GetComponent<Grapple>();
+        animator = GetComponent<Animator>();
     }
 
     void Update()
     {
+        //stateMachine, if 
         
-        
 
     }
 
-    public void ChangeStatus(Status s)
-    {
-        if (status == s) return;
-        status = s;
-        if (onStatusChange != null)
-            onStatusChange.Invoke(status);
+
+
+
+    void AnimationHandler(){
+
     }
-    /*
-    public void ChangeStatus(Status s, Func<IKData> call)
-    {
-        if (status == s) return;
-        status = s;
-        if (onStatusChange != null)
-            onStatusChange.Invoke(status, call);
-    }
-    */
+
+    //if within range, melee attack not ranged?
 
 
 
 
 
+
+
+
+    //on hit, lower player health
+    //need single instance of player info
 }
+
+
 
 
 public class PlayerInfo
@@ -74,6 +70,12 @@ public class PlayerInfo
     public float height;
     public float halfradius;
     public float halfheight;
+    public float mass;
+
+    public int health;
+    public float stamina;
+
+    //Dictionary<string, GameObject>;
 
     public PlayerInfo(float r, float h)
     {

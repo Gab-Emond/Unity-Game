@@ -6,14 +6,16 @@ public class Guard : MonoBehaviour, IDamageable
 {	
 	public enum EntityState
 	{
-	Guarding,
-	Searching,
-	Alerting,
-	Incapacitated
+		Guarding,
+		Searching,
+		Alerting,
+		Incapacitated
 	}
 
+	//event alert signal
 	public EnemyController enemyController;
 	public Transform pathHolder;
+	Vector3[] wayPoints;
 	public LayerMask viewMask;
 	public Transform target;
 	int targetWaypointIndex = 1;
@@ -36,7 +38,9 @@ public class Guard : MonoBehaviour, IDamageable
 	bool standing = true;
 	bool gettingUp = false;
 	
-	
+	//for changing individual when multiple objects use same material:
+	//https://docs.unity3d.com/ScriptReference/MaterialPropertyBlock.html
+	//http://thomasmountainborn.com/2016/05/25/materialpropertyblocks/
 
 	void Start()
 	{
@@ -45,29 +49,26 @@ public class Guard : MonoBehaviour, IDamageable
 		originCol = spotlight.color;
 		
 
-		Vector3[] wayPoints = new Vector3[pathHolder.childCount];
+		wayPoints = new Vector3[pathHolder.childCount];
 		
 		for (int i = 0; i< wayPoints.Length; i++){
 			wayPoints[i] = pathHolder.GetChild(i).position;
 		}
-		transform.position = wayPoints [0]; //puts guard at first waypoint, otherwise no turn towards next
-		move = FollowPath(wayPoints);
+		transform.position = wayPoints [0]; //puts guard at first waypoint
 		currentState = EntityState.Guarding;
-		/*
-		StartCoroutine(move);//FollowPath(wayPoints) would also work
-		moveRunning = true;
-		*/
+		
 	}
 
-	/**/
+	
 	void Update() {
 		//state machine
-		print(currentState);
+		//print(currentState);
 		switch (currentState)
 		{
 			case EntityState.Guarding:
 				//if not running: start coroutine
 				if(!moveRunning){
+					move = FollowPath(wayPoints);
 					StartCoroutine(move);
 					moveRunning = true;
 				}
@@ -112,6 +113,12 @@ public class Guard : MonoBehaviour, IDamageable
 				if(spotlight.color != Color.red){
 					spotlight.color = Color.red;
 				}
+
+
+				/*You can clean up the materials explicitly using Resources.Unload( renderer.material ) when done, 
+				instead of using Resources.UnloadUnusedAssets, which should be faster.*/
+
+
 				break;
 			case EntityState.Incapacitated:
 				if(moveRunning){
@@ -132,11 +139,11 @@ public class Guard : MonoBehaviour, IDamageable
 					//lift up guard
 					//point to Vector3.up
 					if(standing){
+						DisableRagdoll();
 						rebootTimer = rebootTime;
 						currentState = EntityState.Guarding;
 					}
 					else if(!gettingUp){
-						DisableRagdoll();
 						StartCoroutine(StandUp());
 						gettingUp = true;
 					}
@@ -172,19 +179,23 @@ public class Guard : MonoBehaviour, IDamageable
 		Vector3 lookInit = transform.forward;
 		float startTime = Time.time;
 		Vector3 dirToLookTarget = Vector3.forward;//(lookTarget - transform.position).normalized;
-		
-		//&& Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) < 179.95f
-		while (transform.forward != dirToLookTarget){//Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) > 0.05f ) {
-			float fracComplete = (Time.time - startTime) / standUpTime;
+		float angularDragInit = rb.angularDrag;
+		rb.angularDrag = 10f;
+		//while more than 1 degree off being straight up
+		while (Vector3.Angle(transform.up, Vector3.up) > 1f ) {//(transform.up != Vector3.up){
+			//float fracComplete = (Time.time - startTime) / standUpTime;
 
-			Vector3 midLook = Vector3.Slerp(lookInit,dirToLookTarget, Mathf.SmoothStep(0f,1f,fracComplete));	
+			//Vector3 midLook = Vector3.Slerp(lookInit,dirToLookTarget, Mathf.SmoothStep(0f,1f,fracComplete));	
 			
-			transform.rotation = Quaternion.LookRotation(midLook);
+			//transform.rotation = Quaternion.LookRotation(midLook);
+			
+			//rb.MoveRotation(Quaternion.LookRotation(midLook));
+			
+			rb.AddTorque(Vector3.Cross(transform.up,Vector3.up)*75f, ForceMode.Force);
+
 			yield return null;
-		
-		//TODO: fix to make sure turns in shortest dir, as backwards and forwards should both work as "facing"
-		
 		}
+		rb.angularDrag = angularDragInit;
 		gettingUp = false;
 		standing = true;
 		yield return null;
@@ -224,6 +235,9 @@ public class Guard : MonoBehaviour, IDamageable
 		while (Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) > 0.05f) {
 			float angle = Mathf.MoveTowardsAngle (transform.eulerAngles.y, targetAngle, turnSpeed * Time.deltaTime);
 			transform.eulerAngles = Vector3.up * angle;
+			if(Mathf.Abs(Mathf.DeltaAngle(transform.eulerAngles.y, targetAngle)) <= 0.05f){
+				Debug.DrawLine(transform.position,transform.position+20f*transform.forward, Color.green);
+			}
 			yield return null;
 		}
 	}
@@ -235,25 +249,25 @@ public class Guard : MonoBehaviour, IDamageable
 		bool canSee = false;
 		if ((transform.position-target.position).sqrMagnitude < viewDistance*viewDistance) {//compares distance faster, see https://docs.unity3d.com/ScriptReference/Vector3-sqrMagnitude.html
 			
-			Vector3 dirToPlayer = (target.position - transform.position).normalized;//find the vector pointing from our position to the target
-			float angleBetweenGuardAndPlayer = Vector3.Angle (transform.forward, dirToPlayer);
+			Vector3 dirToPlayer = (target.position - transform.position);//find the vector pointing from our position to the target
+			float angleBetweenGuardAndPlayer = Vector3.Angle(transform.forward, dirToPlayer);
 			if(angleBetweenGuardAndPlayer< viewAngle / 2f){
 				
 				vectResult = Vector3.Cross(Vector3.up,dirToPlayer);
-				if(!Physics.Linecast(transform.position, target.position,viewMask)){//LayerMask viewMask;
+				if(!Physics.Linecast(transform.position, target.position,viewMask)){//if nothing is blocking the player (center)
 					canSee= true;
 					//Debug.DrawLine (transform.position, target.position, Color.red);
 				}
 				//Debug.DrawLine (target.position-vectResult, target.position, Color.yellow);
 				
-				else if(Physics.Linecast(target.position-vectResult, target.position, out hitInfo)){//LayerMask viewMask;
+				else if(Physics.Linecast(target.position-vectResult, target.position, out hitInfo)){//if nothing is blocking the player (left)
 					
 					if(!Physics.Linecast(transform.position, hitInfo.point,viewMask)){
 						canSee = true;
 						//Debug.DrawLine(transform.position, hitInfo.point, Color.green);
 					}
 				}
-				else if(Physics.Linecast(target.position+vectResult, target.position, out hitInfo)){//LayerMask viewMask;
+				else if(Physics.Linecast(target.position+vectResult, target.position, out hitInfo)){//if nothing is blocking the player (right)
 					
 					if(!Physics.Linecast(transform.position, hitInfo.point,viewMask)){
 						canSee = true;

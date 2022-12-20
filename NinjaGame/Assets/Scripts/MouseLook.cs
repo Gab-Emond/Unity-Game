@@ -52,10 +52,10 @@ public class MouseLook : MonoBehaviour
         //Debug.Log(transform.localPosition);
 
         //zoom in and out
-        if((distanceRadius+ Input.mouseScrollDelta.y)>=0  &  (distanceRadius+ Input.mouseScrollDelta.y) <= maxRadius){
-            distanceRadius +=Input.mouseScrollDelta.y;
-        }
+        distanceRadius = Mathf.Clamp(distanceRadius+Input.mouseScrollDelta.y, 0f, maxRadius); 
+
         
+        CheckOcclusionCollision();
         transform.localPosition = new Vector3(distanceRadius/8, distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));//camera position,
                 
         //x axis,  shifts to the side; distanceRadius/10
@@ -70,7 +70,7 @@ public class MouseLook : MonoBehaviour
 
         
         //interact here?
-        CheckOcclusionCollision();
+        
     }
 
     
@@ -82,9 +82,9 @@ public class MouseLook : MonoBehaviour
 
 
         //Debug.DrawLine(transform.parent.position, transform.position, Color.green);
-        //check if ray hits something
-        if (distanceRadius > 0f && Physics.Linecast(transform.parent.position, transform.position, out hit, inTheWay)){
-            distanceRadius = Mathf.Clamp(hit.distance, 0, maxRadius); 
+        //check if ray(between camera and player) hits something
+        if (Physics.Linecast(transform.parent.position, transform.position, out hit, inTheWay)){
+            distanceRadius = Mathf.Clamp(distanceRadius, 0f, hit.distance); 
             
         }
 

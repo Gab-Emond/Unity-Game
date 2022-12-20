@@ -43,6 +43,55 @@ namespace Utility.Math
             return maxVal/(1.0f + Mathf.Exp(slope*(x-center)));
         }
 
+        //////////////////////////////////////////////////Probability Functions (wiki+stackoverflow)
+
+        /// <summary>
+        /// generate a random number where the likelihood of a large number is greater than the likelihood of a small number
+        /// </summary>
+        /// <param name="rnd">the random number generator used to spawn the number</param>
+        /// <returns>the random number</returns>
+        public static double InverseBellCurve(System.Random rnd)
+        {
+            return 1 - BellCurve(rnd);
+        }
+        /// <summary>
+        /// generate a random number where the likelihood of a small number is greater than the likelihood of a Large number
+        /// </summary>
+        /// <param name="rnd">the random number generator used to spawn the number</param>
+        /// <returns>the random number</returns>
+        public static double BellCurve(System.Random rnd)
+        {
+            return  System.Math.Pow(2 * rnd.NextDouble() - 1, 2);
+        }
+        /// <summary>
+        /// generate a random number where the likelihood of a mid range number is greater than the likelihood of a Large or small number
+        /// </summary>
+        /// <param name="rnd">the random number generator used to spawn the number</param>
+        /// <returns>the random number</returns>
+        public static double HorizontalBellCurve(System.Random rnd)
+        {
+            //This is not a real bell curve as using the cube of the value but approximates the result set
+            return  (System.Math.Pow(2 * rnd.NextDouble() - 1, 3)/2)+.5;
+        }
+
+        //Marsaglia polar method gaussian double (box muller transform)
+        public static double RandGaussianDouble(System.Random r)
+        {
+            double u, v, S;
+
+            do
+            {
+                u = 2.0 * r.NextDouble() - 1.0;
+                v = 2.0 * r.NextDouble() - 1.0;
+                S = u * u + v * v;
+            }
+            while (S >= 1.0);
+
+            double fac = System.Math.Sqrt(-2.0 * System.Math.Log(S) / S);
+            return u * fac;
+        }
+
+
 
         /////////////////////////////////////////////////Sebastian Extra Methods for pathfinder
         
@@ -72,6 +121,26 @@ namespace Utility.Math
             frictVel = -coef*velocity* Time.deltaTime;
             return frictVel;
         }
+
+
+        public static float InverseLerp(Vector3 a, Vector3 b, Vector3 value){
+            Vector3 AB = b - a;
+            Vector3 AV = value - a;
+            return Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB);
+        }
+
+
+        /////////////////////////////////LineInstersection 2d/////////////////
+
+        public static bool Ccw(Vector2 A,Vector2 B,Vector2 C){//counterclockwise triangle
+            return (C.y-A.y)*(B.x-A.x) > (B.y-A.y)*(C.x-A.x);
+        }
+
+        public static bool IntersectFlat(Vector2 A,Vector2 B,Vector2 C,Vector2 D){//returns if AB intersects CD
+            return Ccw(A,C,D) != Ccw(B,C,D) && Ccw(A,B,C) != Ccw(A,B,D);
+        }
+
+
 
     }
 }

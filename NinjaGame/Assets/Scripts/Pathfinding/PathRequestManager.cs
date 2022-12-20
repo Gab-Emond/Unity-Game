@@ -1,7 +1,7 @@
 using UnityEngine;
 using System.Collections;
 using System.Collections.Generic;
-using System;//to use "actions"
+using System;//to use "actions" // delegate
 
 //adds priority queue, for several entities to pathfind at the "same" time
 public class PathRequestManager : MonoBehaviour {
@@ -9,7 +9,7 @@ public class PathRequestManager : MonoBehaviour {
 	Queue<PathRequest> pathRequestQueue = new Queue<PathRequest>();
 	PathRequest currentPathRequest;
 
-	static PathRequestManager instance;//A static variable in Unity is a variable that is shared by all instances of a class.(singleton, lets everyone access this single same class)
+	static PathRequestManager instance;//A static variable: same for all instances of a class.(singleton, lets everyone access this single same class)
 	Pathfinding3D pathfinding;
 
 	bool isProcessingPath;

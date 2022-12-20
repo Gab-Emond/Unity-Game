@@ -24,6 +24,10 @@ public class PlayerInput : MonoBehaviour
         }
     }
 
+    public bool Jump{
+        get{return Input.GetButtonDown("Jump");}
+    }
+
     public bool run
     {
         get { return Input.GetKey(KeyCode.LeftShift); }
