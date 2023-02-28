@@ -5,6 +5,7 @@ using UnityEngine;
 
 public class MovingPlatform : MonoBehaviour
 {
+    //Rigidbody rigidbody; //use rigidbody.velocity to add to player velocity
     public Transform platform;
 	public Transform pathHolder;
     

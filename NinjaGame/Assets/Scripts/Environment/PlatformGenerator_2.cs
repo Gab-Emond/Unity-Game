@@ -6,17 +6,37 @@ public class PlatformGenerator_2 : MonoBehaviour
 
     public GameObject platformPrefab;
 
-    bool [][][] spaceMatrix;//if false in [i][j][k], empty, if true, full
+    bool [,,] spaceMatrix;//if false in [i][j][k], empty, if true, full
 
-    
+    Vector2[,] walls2d;//lines (origin+dir)
+    //walls as lines v = v_0 + t*dir;
+    //Plane[] wallPos;
+    //Dictionary<char, float[]> wallsDict = new Dictionary<char, float[]>(){{'x', new float[2]},{'y', new float[2]},{'z', new float[2]}};//x[0] min, x[1] max
+
+    //Vector3[] wallsAsBounds = {new Vector3(float.MaxValue,float.MaxValue,float.MaxValue),new Vector3(float.MinValue,float.MinValue,float.MinValue)};//wallsAsBounds[0] min, wallsAsBounds[1] max
+    float[] wallsBounds = {float.MaxValue,float.MinValue,float.MaxValue,float.MinValue}; //min x, max x, min z, max z 
+
+    public Transform walls;
+
+    public float minTurnRadius = 1f;
+
     //path first sparsing second idea
 
     Vector3[] pathOfNodes;
 
+    //////////////////////TestRegion
+
+    Vector2[] circlesPosGlobal;
+    float[] circlesRadiusGlobal;
+    
+    //List<Vector3> tempArcNodes = new List<Vector3>();
+
+    ///////////////////////EndTest
+
     public Transform startNode;
     public Transform endNode;
 
-    float maxSlope = 1.732f;//slightly less than 60 deg
+    float maxSlope = 1.192f;//tan(50 deg)=dy/dr //(r=x+z)
     //maxSope*deltaR = maxDeltaY //for linked path()
     //from point: make sure theta and phi to next point not too similar to "" to previous point
     //theta = baseTheta+gaussianRandom()
@@ -26,153 +46,354 @@ public class PlatformGenerator_2 : MonoBehaviour
     void Start()
     {
 
-        StartCoroutine(GenerateRandomPath(startNode.position, endNode.position));
+        walls2d = new Vector2[walls.childCount,2];
+		for (int i = 0; i< walls.childCount; i++){
+            //assuming wall transform rotated; otherwise no need(just get min-max x and min-max z)
+            walls2d[i,0]=  new Vector2(walls.GetChild(i).position.x,walls.GetChild(i).position.z);
+            walls2d[i,1]= new Vector2(walls.GetChild(i).right.x,walls.GetChild(i).right.z);
+
+            if(walls.GetChild(i).position.x<wallsBounds[0]){
+                wallsBounds[0] = walls.GetChild(i).position.x;
+            }
+            if(walls.GetChild(i).position.x>wallsBounds[1]){
+                wallsBounds[1] = walls.GetChild(i).position.x;
+            }
+
+            //y not needed, as walls = 2d
+
+            if(walls.GetChild(i).position.z<wallsBounds[2]){
+                wallsBounds[2]= walls.GetChild(i).position.z;
+            }
+            if(walls.GetChild(i).position.z>wallsBounds[3]){
+                wallsBounds[3] = walls.GetChild(i).position.z;
+            }
+
+		}
+
+        //StartCoroutine(GenerateRandomPath(startNode.position, endNode.position));
+        StartCoroutine(FullGen(startNode.position, endNode.position));
+    }
+    //todo: use async/await
+    //learn about cancellation tokens (https://learn.microsoft.com/en-us/dotnet/csharp/asynchronous-programming/cancel-an-async-task-or-a-list-of-tasks)
+    IEnumerator FullGen(Vector3 _start, Vector3 _end){
+        yield return StartCoroutine(GenerateRandomPath(_start,_end));
+        yield return StartCoroutine(GeneratePlatforms(pathOfNodes));
     }
 
-
     IEnumerator GeneratePlatforms(Vector3[] nodes){
-        print("startEnum");
         NodesToPlatformMesh(nodes);
-        print("endEnum");
-        return null;
+        yield return null;
     }
 
     IEnumerator GenerateRandomPath(Vector3 _start, Vector3 _end){
-        print("startEnum");
         pathOfNodes = RandomEnclosedPathGenerator(_start, _end);
-        print("endEnum");
-        return null;
+        yield return null;
     }
 
 
     Vector3[] RandomEnclosedPathGenerator(Vector3 start, Vector3 end){
 
-        //somewhat like dfs random
+        //multiple circles in path, check distance of sum of arc length; change circles at connection points
+        //circle minimum radius determined by max elevation (lets curve onto itself more)
 
-        //fill space with nodes
-
-        //random with minimum distance: poisson disc sampling
-
-        //select node randomly; if node possible, add to path; remove impossible nodes
-
-
-        //for node selected, 
-        //if removing node, disconnects a neighbouring node from tree, 
+        //1
+        Vector2 diffVect = new Vector2(end.x,end.z)- new Vector2(start.x,start.z);
+        float distHorizontal = diffVect.magnitude;
+        Vector2 diffVectNorm = diffVect.normalized;
         
-        //dont remove node
-
-        //for node_n in node_curr.neighbour
-        //
-
-        return new Vector3[1];
-    }
-
-    float PointSlope(Vector3 n_0, Vector3 n_1){//check if too steep
-        Vector3 line_1 = n_1-n_0;
-        float thetaInv = Vector3.Angle(line_1,Vector3.up);//theta = 90-thetaInv
-        return thetaInv* Mathf.Rad2Deg;//<30f;
-    }
-
-    bool SmallAngleBetweenPoints(Vector3 n_0, Vector3 n_1, Vector3 n_2){ //checks n_0/n_1 not getting blocked by n_1/n_2
-        //polar coords, check that theta not too similar
-        //project on horizontal plane and check angle
-        Vector3 line_1 = n_1-n_0;
-        Vector3 line_2 = n_2-n_1;
-        float deltaTheta = Vector2.Angle(new Vector2(line_1[0],line_1[2]),new Vector2(line_2[0],line_2[2])); 
-        //if angle smaller than 15deg, too small
-
-        return deltaTheta* Mathf.Rad2Deg<15f;
-    }
-
-    Vector3[] SmallAngleFix(Vector3 n_0, Vector3 n_1, Vector3 n_2){//returns two points, in order of position in path 
-
-        //TODO: around spacing vector, check spacing constraints, from other possible points around
-        //check angle to not make over steep
-
-        Vector3 line_1 = n_1-n_0;
-        Vector3 line_2 = n_2-n_1;
-
-        //making line for extra point(using avgVect), to space n_1
-        //randomly slope horizontally and slightly vertically
-        Vector3 horizontalAvgVect = Vector3.ProjectOnPlane(AverageVect(line_1,line_2), Vector3.up); 
-        Vector3 sideVect = Vector3.Cross(horizontalAvgVect,Vector3.up).normalized;
-
-        float randomDeltaTheta = Random.Range(-5f,5f);//gauss? true rand? small variation
-        float randomDeltaPhi = Random.Range(-5f,0f);//between 0 and (small angle for small slope)
-        Vector3 spacingVector = Quaternion.AngleAxis(randomDeltaTheta, Vector3.up) * sideVect;
-        spacingVector = Quaternion.AngleAxis(randomDeltaPhi, horizontalAvgVect) * spacingVector;
-
-        float randomSpacingAmount = Random.Range(1f,2.5f);
-        Vector3 n_a = n_1+spacingVector*randomSpacingAmount;
-        Vector3 n_b = n_1-spacingVector*randomSpacingAmount;
-
-
-        Vector3[] points;
-        if(Vector3.Angle(Vector3.up,(n_a-n_2))>=Vector3.Angle(Vector3.up,(n_b-n_2))){
-            points = new[] {n_a, n_b};
-            //n_b goes after n_a
-        }
-        else{
-            //n_a goes after n_b
-            points = new[] {n_b, n_a};
-        }
-
-        //n_1 becomes n_a
-        //n_b added between n_1 and n_2
-        //add n_a, n_b to point chain
-
-        return points;
-    }
-
-    Vector3 OverSteepSlopeFix(Vector3 n_0, Vector3 n_1){//, float phi
+        Vector2 startPos2d = new Vector2(start.x,start.z);
+        Vector2 endPos2d = new Vector2(end.x,end.z);
         
-        Vector3 line_1 = n_1-n_0;
-        float len = line_1.magnitude;
 
-        Vector3 horizLine_1 = new Vector3(line_1[0],0,line_1[2]);
+        float diffVert = end.y-start.y;
+        float minimumHorizLength = diffVert/maxSlope;
+
+        //print("minHorizLen: "+ minimumHorizLength);
+        float pathTotalLength = 0;
+        
        
-        //Vector3 n_a = midPoint;//n goes up
+
+        //////////////Test
+
+        // circlesPosGlobal = circlesPos;
+
+        // circlesRadiusGlobal = r_Circle;
+
+
+        ///////////////////
+
+        //iterate
+        int iter = 0;
+        int maxIteration = 20;
+        Stack<Vector2> circleCenterStack = new Stack<Vector2>();
+        Stack<float> circleRadiusStack = new Stack<float>();
+        Stack<Vector2> circleStartPos = new Stack<Vector2>();
+        Stack<Vector2> circleEndPos = new Stack<Vector2>();
+
+        Stack<Vector2> pathAllPointPos = new Stack<Vector2>();
+
+        bool clockWiseSide = false;//true, clockwise from start, false, counterclock from start
         
-        Vector3 midPoint = AverageVect(n_0, n_1);
-        Vector3 crossVect;
+        float randR = Random.Range(minTurnRadius, Mathf.Min(wallsBounds[1]-wallsBounds[0],wallsBounds[3]-wallsBounds[2])/6);
+        circleStartPos.Push(startPos2d);
+        
 
-        if(Vector3.Cross(line_1,Vector3.up)==Vector3.zero){
-            float randX = Random.Range(-1,1);
-            float randZ = Mathf.Sqrt(1-randX*randX);
-            crossVect = new Vector3(randX,0,randZ);
+        if(Mathf.Min(startPos2d.x-wallsBounds[0],wallsBounds[1]-startPos2d.x)<
+        Mathf.Min(startPos2d.y-wallsBounds[2],wallsBounds[3]-startPos2d.y)){
+            if(startPos2d.x-wallsBounds[0]<wallsBounds[1]-startPos2d.x){
+                circleCenterStack.Push(startPos2d+Vector2.right*randR);
+            }
+            else{
+                circleCenterStack.Push(startPos2d+Vector2.left*randR);
+            }
         }
         else{
-            crossVect = Vector3.Cross(line_1,Vector3.up).normalized;
+            if(startPos2d.y-wallsBounds[2]<wallsBounds[3]-startPos2d.y){
+                circleCenterStack.Push(startPos2d+Vector2.up*randR);
+            }
+            else{
+                circleCenterStack.Push(startPos2d+Vector2.down*randR);
+            }
+        }
+        
+
+        circleRadiusStack.Push(randR);
+
+        while(pathTotalLength<minimumHorizLength&&iter<maxIteration){
+            bool validPosFound = false;
+            int inner_Iter = 0;
+            Vector2 prevCenter=circleCenterStack.Peek();
+            float prevRadius=circleRadiusStack.Peek();
+            Vector2 samplePoint = new Vector2();
+            while(!validPosFound&&inner_Iter<maxIteration){
+                float randX = Random.Range(wallsBounds[0]+minTurnRadius,wallsBounds[1]-minTurnRadius);
+                float randY = Random.Range(wallsBounds[2]+minTurnRadius,wallsBounds[3]-minTurnRadius);
+
+                //possible next step: increase odds of further point
+                //ex: find quadrant circle is in, increase chance of other quadrants
+
+
+                samplePoint = new Vector2(randX,randY);
+                if((samplePoint-prevCenter).sqrMagnitude<(prevRadius+minTurnRadius)*(prevRadius+minTurnRadius)){
+                    validPosFound = false;
+                }
+                else{
+                    validPosFound = true;
+                }
+
+                inner_Iter++;
+            }
+
+            //from pos, get possible radius
+
+            // wall distances+sphere distance
+            float[] wallDists = new float[walls2d.GetLength(0)];
+            float closestDist = (samplePoint-prevCenter).magnitude-prevRadius;
+            for(int j =0; j< walls2d.GetLength(0);j++){
+                wallDists[j] = Utility.Math.MathUtility.DistancePointLine2d(walls2d[j,0],walls2d[j,1],samplePoint);            
+                if(wallDists[j]<closestDist){
+                    closestDist = wallDists[j];
+                }
+            }
+            //error: radius can overlap, might be causing the line between circles issues
+
+            float sampleRadius = Mathf.Min(Mathf.Min(wallsBounds[1]-wallsBounds[0],wallsBounds[3]-wallsBounds[2])/4,closestDist);//Random.Range(minTurnRadius,Mathf.Min(Mathf.Min(wallsBounds[1]-wallsBounds[0],wallsBounds[3]-wallsBounds[2])/3,closestDist));
+
+            Vector2[] points = Utility.Math.MathUtility.LineBetweenCircles(prevCenter,prevRadius,samplePoint,sampleRadius,clockWiseSide?-1:1);
+            
+            circleEndPos.Push(points[0]);
+            float pathOnPrevCircle = Utility.Math.MathUtility.ArcLength2D(circleStartPos.Peek()-circleCenterStack.Peek(),circleEndPos.Peek()-circleCenterStack.Peek(),circleRadiusStack.Peek());
+            //pathOnPrevCircle = clockWiseSide?2*Mathf.PI*circleRadius.Last.Value-pathOnPrevCircle:pathOnPrevCircle;
+
+            if(Utility.Math.MathUtility.Ccw(circleCenterStack.Peek(),circleStartPos.Peek(),circleEndPos.Peek())==clockWiseSide){//if not the same rotation dir
+                pathOnPrevCircle = 2*Mathf.PI*circleRadiusStack.Peek()-pathOnPrevCircle;//larger side
+            }
+            //else same rotation dir; smaller side
+
+            //todo: insert points between start and end on arc
+
+            //getpointsinarc
+
+            Vector2[] centerPoints = Utility.Math.MathUtility.GetPointsInArc(circleCenterStack.Peek(),circleRadiusStack.Peek(),circleStartPos.Peek(),circleEndPos.Peek(),clockWiseSide);
+            pathAllPointPos.Push(circleStartPos.Peek());
+            foreach (Vector2 point in centerPoints)
+            {
+                pathAllPointPos.Push(point);
+            }
+            pathAllPointPos.Push(circleEndPos.Peek());
+
+            if(points.Length==2){
+                
+                float pathExtra = (points[1]-points[0]).magnitude;//space between the circles
+                pathTotalLength+=pathExtra;
+                circleStartPos.Push(points[1]);            
+            }
+            else{//touching, only one point
+                circleStartPos.Push(points[0]);
+            }
+            //error, if touching uses center?
+
+
+            circleCenterStack.Push(samplePoint);
+            circleRadiusStack.Push(sampleRadius);
+
+            pathTotalLength +=pathOnPrevCircle;
+            //from possible radius, get random radius
+            //from pos and random radius,and prev pos and prev radius, get new path length
+            
+
+            clockWiseSide = !clockWiseSide;
+            iter++;
+
         }
 
+        //section links final circle to end pos, two ways depending on if outside or inside
+        
+        
+        if((circleCenterStack.Peek()-endPos2d).magnitude>circleRadiusStack.Peek()){
+            //point to circle method
+            Vector2[] points= Utility.Math.MathUtility.LineCirclePoint(circleCenterStack.Peek(),circleRadiusStack.Peek(),endPos2d,clockWiseSide?-1:1);
+            circleEndPos.Push(points[0]);
 
-        float r = midPoint.y/1.6f;//tan theta  = y/r, r = y/tan theta
-        float z = Mathf.Sqrt(r-(new Vector2(midPoint.x,midPoint.z)).sqrMagnitude);
+            //////////////////////////////////////////////////
+            Vector2[] centerPoints = Utility.Math.MathUtility.GetPointsInArc(circleCenterStack.Peek(),circleRadiusStack.Peek(),circleStartPos.Peek(),circleEndPos.Peek(),clockWiseSide);
 
-        Vector3 nA = midPoint + z*crossVect;
-        Vector3 nB = midPoint - z*crossVect;
-        float twoSide = Random.Range(-1,1);
-        if(twoSide<0){
-            return nA;
+            pathAllPointPos.Push(circleStartPos.Peek());
+            foreach (Vector2 point in centerPoints)
+            {
+                pathAllPointPos.Push(point);
+            }
+            pathAllPointPos.Push(circleEndPos.Peek());
+            pathAllPointPos.Push(points[1]);
+            //////////////////////////////////////////////////
+            
+            //circleStartPos.Push(points[1]);
         }
         else{
-            return nB;
+            //tangent inside
+            //center-endpos, get intersection points with circle
+            //line = center + t*(center-endpos)
+            //intersect = center +- r(center-endpos).normalized;
+            Vector2 intersect = circleCenterStack.Peek()+circleRadiusStack.Peek()*(circleCenterStack.Peek()-endPos2d).normalized;
+            //end.push intersect
+            //start.push endpos2d
+            circleEndPos.Push(intersect);
+            //////////////////////////////////////////////////
+            Vector2[] centerPoints = Utility.Math.MathUtility.GetPointsInArc(circleCenterStack.Peek(),circleRadiusStack.Peek(),circleStartPos.Peek(),circleEndPos.Peek(),clockWiseSide);
+
+            pathAllPointPos.Push(circleStartPos.Peek());
+            foreach (Vector2 point in centerPoints)
+            {
+                pathAllPointPos.Push(point);
+            }
+            pathAllPointPos.Push(circleEndPos.Peek());
+            pathAllPointPos.Push(endPos2d);
+            //////////////////////////////////////////////////
+            
+            //circleStartPos.Push(endPos2d);
+
+
         }
 
-        //twoCircleInterSections(n_0,n_1)
+
+        //todo, make new stack, containing points from start to end on circles
+
+        //for each circle
+
+        //get angle between start and end
+        //depending on angle, split into number of parts
+
+
+
+
+
+        circlesPosGlobal = circleCenterStack.ToArray();
+        circlesRadiusGlobal = circleRadiusStack.ToArray();
+
+        //int numOfPoints = circleStartPos.Count+circleEndPos.Count;
+        Vector3[] posTemp = new Vector3[pathAllPointPos.Count]; 
+        float trueLen = 0;
+        Vector2 prevPos = pathAllPointPos.Peek();
+        for (int i = posTemp.Length - 1; i >= 0 ; i--)
+        {
+            
+
+            Vector2 point = pathAllPointPos.Pop();
+            posTemp[i] = new Vector3(point.x,0,point.y);
+            
+            trueLen += (point-prevPos).magnitude; 
+            prevPos = point;
+        }
+        print("trueLen: "+trueLen);
+        float currLen = 0;
+        for (int i = 0; i < posTemp.Length; i++)
+        {
+            if(i>0){
+                Vector2 prev = new Vector2(posTemp[i-1].x,posTemp[i-1].z);
+                Vector2 curr = new Vector2(posTemp[i].x,posTemp[i].z);
+                currLen += (curr-prev).magnitude;
+            }
+            posTemp[i].y=Mathf.Lerp(start.y,end.y,(currLen/trueLen));
+            
+        }
+
+        // print("pathOfNode Start: "+posTemp[0]);
+        // print("pathOfNode End: "+posTemp[posTemp.Length-1]);
+
+        //print("endInsertLen"+i);
+        
+
+        //print("pathTotLength: "+pathTotalLength);
+
+
+        
+
+        //1. for distance (x,0,z) between start and end, seperate into spheres of diameters d > 2*r_min for according to max 
+
+        //while(path<minimum path for reaching endpoint)
+
+        //2.choose random circle to expand (change to r = r+random)
+        //2a. choose random point in possible space (away from walls, further from before+after circle)
+        
+        //could pseudo hash, if within circles , send away from them
+        //if within walls, modulo around other side
+
+        //split space into grid, remove unplacable points
+
+        //for(int i = center.x-radius;i<center.x+radius;i++)
+        //float squareY = (int) Mathf.Sqrt(radius*radius-i*i);
+        //for(int j  = center.y-squareY;j<center.y+squareY;j++)
+        //grid[i,j] = false;
+
+        //how to pick only from valid
+
+        
+        //if((pos-center).sqrMagnitude<r+r_min)
+        //restart next iteration
+        //push away by r amount, looping around inside space
+        
+        //if (close to end && path done)
+        //end path
+
+
+        //3.check path length
+        //3a. save path lenght to lower check time; 
+        //3b. only change part of path length from recent changed spheres
+
+        //if path length>minimum path to reach end
+        //return path
+        //else
+        //choose random to expand
+
+        
+
+        return posTemp;//new Vector3[1];
     }
+
+   
 
     Vector3 AverageVect(Vector3 line_1, Vector3 line_2){
         return (line_1+line_2)/2;
-    }
-
-    Vector3 ClosestPointOnLine(Vector3 n_0, Vector3 n_1, Vector3 point){
-        Vector3 line_1 = n_1-n_0;
-        Vector3 perpVect = Vector3.Cross(line_1,n_0-point).normalized;
-        Vector3 dVect = Vector3.Cross(perpVect,line_1).normalized;
-
-        return Vector3.zero;
-
     }
 
     //for array of points, return the platforms that connects them
@@ -193,7 +414,7 @@ public class PlatformGenerator_2 : MonoBehaviour
         //possible direction: marching cubes (more angular)
     }
 
-    List<Vector3> BresenhamAlgo3D(Vector3 n_1, Vector3 n_2){//float stepSize
+    List<Vector3> BresenhamAlgo3D(Vector3 n_1, Vector3 n_2,float stepSize=1){
         //note, does not add n_1 into list of points
         //used for chain of nodes not to spawn points twice (end last == new next)
         print("Bresenham");
@@ -226,7 +447,7 @@ public class PlatformGenerator_2 : MonoBehaviour
         else
             z_s = -1;
 
-        //listOfPoints.Add(new Vector3(x_1, y_1, z_1));//add n_1 into list of points
+        listOfPoints.Add(new Vector3(x_1, y_1, z_1));//add n_1 into list of points
 
         // Driving axis is X-axis"
         if (delta_x >= delta_y && delta_x >= delta_z){
@@ -291,26 +512,60 @@ public class PlatformGenerator_2 : MonoBehaviour
         return listOfPoints;
     }
 
+    
+
     void OnDrawGizmos() {
 		Vector3 startPosition = startNode.position;
 		Vector3 previousPosition = startPosition;
+        int prevI = 0;
 
         if(Application.isPlaying){
    
             if(pathOfNodes !=null){
-                foreach (Vector3 node in pathOfNodes) {
-                    Gizmos.color = Color.red;
-                    Gizmos.DrawSphere (node, .3f);
-
+                
+                for (int i = 1; i < pathOfNodes.Length; i++)
+                {
+                    //print("prevI: "+prevI+", currI: "+i);
+                    Vector3 node = pathOfNodes[i];
                     Gizmos.color = Color.yellow;
                     Gizmos.DrawLine (previousPosition, node);
                     previousPosition = node;
+                    prevI = i;
+                    
                 }
+                
             }
-            Gizmos.DrawSphere (startPosition, .3f);
-            Gizmos.DrawSphere (endNode.position, .3f);
-            //Gizmos.DrawLine (previousPosition, startPosition);
+
+            // if(circlesPosGlobal !=null){
+            //     for(int i = 0; i<circlesPosGlobal.Length;i++){
+            //         Vector3 node = new Vector3(circlesPosGlobal[i].x,0,circlesPosGlobal[i].y);
+            //         float r_node = circlesRadiusGlobal[i];
+            //         Gizmos.color = Color.red;
+            //         Gizmos.DrawSphere (node, r_node);
+            //     }
+            // }
+
+            
+            
         }
+        if(walls2d!=null){
+            for(int i = 0 ; i<walls2d.GetLength(0);i++){
+                Gizmos.color = Color.cyan;
+                Gizmos.DrawLine(new Vector3(walls2d[i,0].x,0,walls2d[i,0].y)-100*new Vector3(walls2d[i,1].x,0,walls2d[i,1].y),new Vector3(walls2d[i,0].x,0,walls2d[i,0].y)+100*new Vector3(walls2d[i,1].x,0,walls2d[i,1].y));
+            }
+        }
+        // if(wallsBounds!=null){
+        //     Gizmos.color = Color.red;
+        //     Gizmos.DrawLine(new Vector3(wallsBounds[0],0,-200),new Vector3(wallsBounds[0],0,200));
+        //     Gizmos.DrawLine(new Vector3(wallsBounds[1],0,-200),new Vector3(wallsBounds[1],0,200));
+        //     Gizmos.DrawLine(new Vector3(-200,0,wallsBounds[2]),new Vector3(200,0,wallsBounds[2]));
+        //     Gizmos.DrawLine(new Vector3(-200,0,wallsBounds[3]),new Vector3(200,0,wallsBounds[3]));
+
+        // }
+        Gizmos.DrawSphere (startPosition, minTurnRadius);
+        Gizmos.DrawSphere (endNode.position, minTurnRadius);
+
+        
 	}
 
 

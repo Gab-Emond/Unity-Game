@@ -3,6 +3,10 @@ using System.Collections.Generic;
 using UnityEngine;
 //using Utility.Math;
 
+
+//https://www.sloyd.ai/user-creations
+//https://www.solacevision.com/
+
 //tiny levels; generates cubes within area, with start and end goals
 
 
@@ -22,6 +26,26 @@ using UnityEngine;
 //}
 
 //allextravector/nbPlatforms
+
+//idea, use circle of curvature:https://www.youtube.com/watch?v=si6ka6HeUdY&ab_channel=Dr.TreforBazett
+
+//multiple circles in path, check distance of sum of arc length; change circles at connection points
+//circle minimum radius determined by max elevation (lets curve onto itself more)
+
+//1. for distance (x,0,z) between start and end, seperate into spheres of diameters d > 2*r_min for according to max 
+
+//2.choose random circle to expand (change to r = r+random)
+//2a. check around for space to check closest circle to expand
+//2b. check radius possible to expand(approx)
+//2c. r = r+random(min,max)
+
+//3.check path length
+//3a. save path lenght to lower check time; 
+//3b. only change part of path length from recent changed spheres
+
+//cell decomposition? voronoi?
+
+//backtracking algorithm
 
 ///////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -53,6 +77,23 @@ using UnityEngine;
 
 
 //for circle with min max radius, get pointincircle, convert to polar, make r larger, re convert to points
+
+//////////////////////////////////////////////////////////////////////////////////
+    //somewhat like dfs random
+
+    //fill space with nodes
+
+    //random with minimum distance: poisson disc sampling
+
+    //select node randomly; if node possible, add to path; remove impossible nodes
+
+    //for node selected, 
+    //if removing node, disconnects a neighbouring node from tree, 
+    
+    //dont remove node
+
+    //for node_n in node_curr.neighbour
+    //
 public class PlatformGenerator : MonoBehaviour
 {
 
@@ -69,7 +110,7 @@ public class PlatformGenerator : MonoBehaviour
     float maxDeltH;
     float currDeltH;
 
-    bool [][][] spaceMatrix;//if false in [i][j][k], empty, if true, full
+    bool [,,] spaceMatrix;//if false in [i][j][k], empty, if true, full
 
     
     //path first sparsing second idea
@@ -333,7 +374,7 @@ public class PlatformGenerator : MonoBehaviour
     List<Vector3> BresenhamAlgo3D(Vector3 n_1, Vector3 n_2){//float stepSize
         //note, does not add n_1 into list of points
         //used for chain of nodes not to spawn points twice (end last == new next)
-        print("Bresenham");
+        //print("Bresenham");
         List<Vector3> listOfPoints = new List<Vector3>();
         
         int x_1 = (int)n_1.x;
@@ -444,6 +485,17 @@ public class PlatformGenerator : MonoBehaviour
 		//Gizmos.DrawLine (previousPosition, startPosition);
 	}
 
+    //wave function collapse
+    public class Node{
+        Vector3 position;
+
+        enum state
+        {
+            empty,
+            full,
+            unusable
+        }
+    }
 
 
 }

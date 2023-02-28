@@ -43,6 +43,8 @@ namespace Utility.Math
             return maxVal/(1.0f + Mathf.Exp(slope*(x-center)));
         }
 
+
+
         //////////////////////////////////////////////////Probability Functions (wiki+stackoverflow)
 
         /// <summary>
@@ -140,6 +142,147 @@ namespace Utility.Math
             return Ccw(A,C,D) != Ccw(B,C,D) && Ccw(A,B,C) != Ccw(A,B,D);
         }
 
+        //https://mathworld.wolfram.com/Point-LineDistance3-Dimensional.html
+        public static float DistancePointLine2d(Vector2 l_origin, Vector2 dir, Vector2 point){//freya implementation 
+            return Mathf.Abs(Determinant2D( dir.normalized, point - l_origin ));//absolute distance
+        }
+
+        public static float Determinant2D ( Vector2 a, Vector2 b ) => a.x * b.y - a.y * b.x; // or Cross, 2D "cross product"
+        //////////////////////////////Circle Intersection
+
+        public static Vector2[] CirclesIntersect(Vector2 p_0, float r_0, Vector2 p_1, float r_1){//return intersection points
+            
+            if(Vector2.SqrMagnitude(p_0-p_1)>(r_0+r_1)*(r_0+r_1)){
+                return null;//if distance between circles greater than radius, no intersections, return null
+            }
+            else if(Vector2.SqrMagnitude(p_0-p_1)==(r_0+r_1)*(r_0+r_1)){
+                return new Vector2[]{p_0+r_0*((p_1-p_0).normalized)};//one intersection
+            }
+
+            float d = (p_1-p_0).magnitude;
+
+            float a = (r_0*r_0-r_1*r_1 + d*d)/(2*d);
+            float h = Mathf.Sqrt(r_0*r_0-a*a);
+
+            Vector2 p_2 = p_0 + a*(p_1-p_0)/d;
+
+            Vector2[] p_3 = new Vector2[2];
+
+            p_3[0] =new Vector2(p_2[0]+h*(p_1[1]-p_0[1])/d, p_2[1]-h*(p_1[0]-p_0[0])/d) ;
+            p_3[1] =new Vector2(p_2[0]-h*(p_1[1]-p_0[1])/d, p_2[1]+h*(p_1[0]-p_0[0])/d) ;
+
+            return p_3;
+        }
+
+        public static Vector2[] LineBetweenCircles(Vector2 p_0, float r_0, Vector2 p_1, float r_1, int dir=1){
+
+            if((p_1-p_0).sqrMagnitude==(r_0+r_1)*(r_0+r_1)){
+                Vector2 intersect = p_1+r_1*(p_0-p_1).normalized;
+                return new Vector2[]{intersect};
+            }
+
+            //dir = -1; clockwise, dir = 1; counterclockwise
+            Vector2 p_mid = p_1-p_0;
+            float p_mag = p_mid.magnitude;
+
+            float angle_0 = Mathf.Acos((r_0+r_1)/p_mag);
+            //float angle_1 = Mathf.Asin((r_0+r_1)/p_mag);
+
+            Vector2 midRotated_0 =r_0*RotationMatrix2d(p_mid,-dir*angle_0).normalized;
+            Vector2 midRotated_1 = r_1*RotationMatrix2d(-p_mid,-dir*angle_0).normalized;
+            
+            return new Vector2[]{p_0+midRotated_0,p_1+midRotated_1};
+        }
+
+        public static Vector2[] LineCirclePoint(Vector2 p_0, float r_0, Vector2 p_1, int dir = 1){
+            Vector2 p_mid = p_1-p_0;
+            float p_mag = p_mid.magnitude;
+
+            float angle_0 = Mathf.Acos(r_0/p_mag);
+            Vector2 midRotated_0 =r_0*RotationMatrix2d(p_mid,-dir*angle_0).normalized;
+
+            return new Vector2[]{p_0+midRotated_0, p_1};
+
+        }
+
+        public static Vector2 RotationMatrix2d(Vector2 v_init, float angle){//pos = counterclock angle
+            return new Vector2(v_init.x*Mathf.Cos(angle)-v_init.y*Mathf.Sin(angle),v_init.x*Mathf.Sin(angle)+v_init.y*Mathf.Cos(angle)); 
+        }
+
+
+        public static float ArcLength2D(Vector2 p_A, Vector2 p_B, float r){
+            float c_Len = (p_A-p_B).magnitude;
+
+            if(c_Len==r){
+                return Mathf.PI*r;
+            }
+
+            float arc_Angle = 2*Mathf.Atan(c_Len/(2*r));//angle in radian
+            
+            return arc_Angle*r;
+
+        }
+
+        public static Vector2[] GetPointsInArc(Vector2 p_0, float r_0,Vector2 p_A, Vector2 p_B, bool clockWiseDir){
+            float minDist = 2f;
+            float minAngle = 2*Mathf.Asin(minDist/(2*r_0))*Mathf.Rad2Deg;
+            minAngle = Mathf.Max(30,minAngle);
+            int dir = 1;
+            if(clockWiseDir){
+                dir = -1;
+            }
+
+            //dir = 1: counterclock, dir = -1 clock
+            float c_Len = (p_A-p_B).magnitude;
+            float arc_Angle = Vector2.Angle(p_A-p_0,p_B-p_0);//always between -180 and 180
+
+            //clockwise ab = negative, counterclock ab = positive
+
+            if(Ccw(p_A,p_B,p_0)==clockWiseDir){
+                arc_Angle = 360-arc_Angle; 
+            }
+
+            int numPoints = (int)(arc_Angle/minAngle);//rounds down
+            //ex: 60, 3 points (20,40,60),last point removed,2 points between (20,40)
+            //10, 0 points
+            //20, 1 point(20)
+            
+
+            float angleBetweenPoints = dir*arc_Angle/numPoints;
+
+            Vector2[] arcPoints = new Vector2[Mathf.Max(0,numPoints-1)];
+            
+            float startAngle = Vector2.SignedAngle(Vector2.right,p_A-p_0);
+            if(startAngle<0){
+                startAngle = 360+startAngle;
+            }
+            for (int i = 1; i < numPoints; i++)
+            {
+                arcPoints[i-1] = GetUnitOnCircle(startAngle+i*angleBetweenPoints,r_0)+p_0;
+            }
+
+            return arcPoints;
+        }
+
+        public static Vector2 GetUnitOnCircle(float angleDeg, float radius){//returns -center
+        
+            // initialize calculation variables
+            float _x = 0;
+            float _y = 0;
+            Vector2 _returnVector;
+            
+            float angleRadians = angleDeg*Mathf.Deg2Rad;
+
+            // get the 2D dimensional coordinates
+            _x = radius * Mathf.Cos(angleRadians);
+            _y = radius * Mathf.Sin(angleRadians);
+        
+            // derive the 2D vector
+            _returnVector = new Vector2(_x, _y);
+        
+            // return the vector info
+            return _returnVector;
+        }
 
 
     }

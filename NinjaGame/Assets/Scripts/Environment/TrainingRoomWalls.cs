@@ -90,15 +90,31 @@ public class TrainingRoomWalls : MonoBehaviour {
                 //ienum
 
                 if(Vector3.Dot(cubes[i].transform.position,dir)-Mathf.Floor(Vector3.Dot(cubes[i].transform.position,dir))==0){
-                    
+                    //if at int position
                 }
 
                 cubes[i].transform.position += dir*cubeSpeed*Time.deltaTime; 
             }
 
-            
 
+    }
+
+    class Cube{
+        GameObject thisCubeObject;
+        Stack<Vector3> pathNodes;
+
+        Vector3 nextNode;
+
+        public Cube(){//constructor
+
+        }
+        private void Update(float deltaTime) {
+            
+        }
 
     }
 
 }
+
+
+
