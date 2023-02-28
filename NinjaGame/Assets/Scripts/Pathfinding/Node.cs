@@ -1,6 +1,10 @@
 ﻿using UnityEngine;
 using System.Collections;
 
+namespace Pathfinding
+{
+	
+}
 public class Node : IHeapItem<Node> {//designates nodes to be the type of class usable by heap
 	
 	public bool walkable;

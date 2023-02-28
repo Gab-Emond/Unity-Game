@@ -164,13 +164,12 @@ public class DroneShooter : Enemy, IDamageable//make child objects with differen
                     }
                     else{
                         //takes 1sec to reach, by definition
+                        //or change to rotate towards, to limit max rotation speed
                         midLook = Vector3.Slerp(transform.forward, _target.transform.position-transform.position, Time.time - timeLastShot);
                         //transform.rotation = Quaternion.LookRotation(midLook);
                         transform.LookAt(transform.position+ midLook);
                         
-                        //TurnToFace(transform.position + _direction);
                         
-                        //print(_direction);
                         return;
 
                         

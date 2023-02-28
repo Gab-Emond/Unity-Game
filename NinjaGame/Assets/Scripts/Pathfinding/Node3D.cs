@@ -2,6 +2,12 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+
+namespace Pathfinding
+{
+	
+}
+
 public class Node3D : IHeapItem<Node3D> {
  	public bool walkable;
 	public Vector3 worldPosition;

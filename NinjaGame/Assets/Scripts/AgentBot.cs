@@ -13,8 +13,6 @@ public class AgentBot : Enemy
     void Start()
     {
         
-        
-        
     }
 
     // Update is called once per frame

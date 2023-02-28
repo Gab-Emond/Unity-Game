@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System;//to use "actions" // delegate
 
+namespace Pathfinding
+{
+	
+}
+
 //adds priority queue, for several entities to pathfind at the "same" time
 public class PathRequestManager : MonoBehaviour {
 

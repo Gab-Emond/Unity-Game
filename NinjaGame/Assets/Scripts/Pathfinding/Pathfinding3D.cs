@@ -3,6 +3,11 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 using Utility.Math;
+
+namespace Pathfinding
+{
+	
+}
 public class Pathfinding3D : MonoBehaviour
 {
    PathRequestManager requestManager;

@@ -6,6 +6,8 @@ namespace Utility.StateMachine{
     public class SightLineFSM : StateMachine, IParentingCollider {
 
         public LayerMask viewMask;
+        LayerMask targetLayer;// to just hit target
+
 
         public string targetTag = "Player";
         //bool canSeeTarget = false;
@@ -41,22 +43,22 @@ namespace Utility.StateMachine{
             Vector3 dirToPlayer = (target.position - transform.position);
 
             vectResult = Vector3.Cross(Vector3.up, dirToPlayer);
-            if(!Physics.Linecast(transform.position, target.position, viewMask)){//if nothing is blocking the player (center)
+            if(Physics.Raycast(transform.position, dirToPlayer, out hitInfo, dirToPlayer.sqrMagnitude, viewMask)&&hitInfo.collider.CompareTag(targetTag)){//if nothing is blocking the player (center)
                 canSee= true;
                 //Debug.DrawLine (transform.position, target.position, Color.red);
             }
             //Debug.DrawLine (target.position-vectResult, target.position, Color.yellow);
             
-            else if(Physics.Linecast(target.position-vectResult, target.position, out hitInfo)){//if nothing is blocking the player (left)
-                
-                if(!Physics.Linecast(transform.position, hitInfo.point, viewMask)){
+            else if(Physics.Linecast(target.position-vectResult, target.position, out hitInfo)){//get leftmost side of target
+                Vector3 sideToEye = hitInfo.point-transform.position;
+                if(Physics.Raycast(transform.position, sideToEye, out hitInfo, dirToPlayer.sqrMagnitude, viewMask)&&hitInfo.collider.CompareTag(targetTag)){//if nothing between target to eye(left)
                     canSee = true;
                     //Debug.DrawLine(transform.position, hitInfo.point, Color.green);
                 }
             }
-            else if(Physics.Linecast(target.position+vectResult, target.position, out hitInfo)){//if nothing is blocking the player (right)
-                
-                if(!Physics.Linecast(transform.position, hitInfo.point, viewMask)){
+            else if(Physics.Linecast(target.position+vectResult, target.position, out hitInfo)){//get rightmost side of target
+                Vector3 sideToEye = hitInfo.point-transform.position;
+                if(Physics.Raycast(transform.position, sideToEye, out hitInfo, dirToPlayer.sqrMagnitude, viewMask)&&hitInfo.collider.CompareTag(targetTag)){//if nothing between target to eye(right)
                     canSee = true;
                     //Debug.DrawLine(transform.position, hitInfo.point, Color.green);
                 }

@@ -3,6 +3,10 @@ using System.Collections;
 using System.Collections.Generic;
 using System;
 
+namespace Pathfinding
+{
+	
+}
 //simplifies path, for fewer waypoints
 //also manages several
 public class Pathfinding2 : MonoBehaviour {

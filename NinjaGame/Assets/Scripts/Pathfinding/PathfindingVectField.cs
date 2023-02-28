@@ -2,6 +2,11 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Pathfinding
+{
+	
+}
+
 public class PathfindingVectField : MonoBehaviour
 {
     // Start is called before the first frame update

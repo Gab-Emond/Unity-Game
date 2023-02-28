@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Pathfinding
+{
+	
+}
 public class Grid : MonoBehaviour //assigned to empty game object, center of world
 {	
 	public Transform player;

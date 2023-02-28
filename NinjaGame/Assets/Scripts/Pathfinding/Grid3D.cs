@@ -2,6 +2,10 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+namespace Pathfinding
+{
+	
+}
 public class Grid3D : MonoBehaviour
 {
  
