@@ -57,7 +57,8 @@ public class Projectile : MonoBehaviour
         Setup();
         //StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
         Destroy(gameObject,maxLifetime);
-        Launch(100f);
+        //error: invoked twice
+        //Launch(100f);
 
     }
     // Update is called once per frame
@@ -96,11 +97,16 @@ public class Projectile : MonoBehaviour
                 hitSomething = true;
                 
                 //rb.constraints = RigidbodyConstraints.FreezeAll;
+                
                 rb.isKinematic = true;
                 rb.detectCollisions = false;
+                //Destroy(rb);
                 transform.position = hitInfo.point;
-                this.transform.parent = hitInfo.transform;
                 
+                //err with setparent in unity, if object scaled asymetrically, rotation will mess up
+                this.transform.SetParent(hitInfo.transform, true); 
+                
+
                 if(explode){
                     Explode();
                 }
