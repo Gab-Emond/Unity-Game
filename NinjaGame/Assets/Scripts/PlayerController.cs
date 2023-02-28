@@ -5,6 +5,10 @@ using UnityEngine;
 using UnityEngine.Events;
 //the brain
 
+
+public enum Status { idle, walking, crouching, sprinting, sliding, wallRunning, vaulting, grabbedLedge, climbingLedge, surfaceSwimming, underwaterSwimming }
+
+
 //If you wish to use a generic UnityEvent type you must override the class type.
 //https://docs.unity3d.com/ScriptReference/Events.UnityEvent.html
 

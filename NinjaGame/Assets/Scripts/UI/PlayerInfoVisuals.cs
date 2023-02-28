@@ -5,6 +5,7 @@ using UnityEngine.UI;
 
 public class PlayerInfoVisuals : MonoBehaviour
 {
+    
 
     public Slider healthSlider;
     public Slider staminaSlider;
@@ -35,9 +36,10 @@ public class PlayerInfoVisuals : MonoBehaviour
         stamina =playerMovement.Stamina;
         prevStamina = stamina;
     }
+
+    //todo, use tweening, dotween
     private void Update() {
         stamina = playerMovement.Stamina;
-        //add fade in/out
         
         if(stamina >= prevStamina){
             

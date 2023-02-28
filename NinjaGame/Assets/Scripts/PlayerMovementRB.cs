@@ -185,10 +185,9 @@ public class PlayerMovementRB : MonoBehaviour
             ropeVect = ropeVect.normalized;
             if((transform.position-target).sqrMagnitude >= grappleDistance*grappleDistance){
                 v_0 = velocity;
-                //controller.enabled = false;
                 rb.MovePosition(target-ropeVect*grappleDistance);
-                //controller.enabled = true;
                 velocity = v_0;
+                //doesnt set velocity; velocity is modified seperately from moveposition
                 
                 if(Vector3.Dot(velocity,ropeVect)<0){
                     correction = -Vector3.Project(velocity,ropeVect);

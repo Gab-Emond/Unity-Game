@@ -262,7 +262,6 @@ public class PlayerMovement : MonoBehaviour
                 Vector3 velAcc = Vector3.Project(velocity, Vector3.ProjectOnPlane(transform.up, slopeNormal));
                 velocity = move;
                 velocity +=velAcc;
-                
             }
             if (playerInput.Jump){
                 Vector3 jumpDir = -gravDir*0.5f + slopeNormal*0.5f;
@@ -425,6 +424,9 @@ public class PlayerMovement : MonoBehaviour
 
             //basic slow down; slower at higher speed (input/speedindir**2)?
             
+            //option: set maximum amount of velocity change (in pulling direction) per swing, resets at bottom
+
+
             velocity += (Vector3.Project(transform.forward, pullDir)/2 +Vector3.Project(transform.forward, sideVect)/4)*inputs.y;//6*Time.deltaTime*
             velocity += (Vector3.Project(transform.right, pullDir)/2 +Vector3.Project(transform.right, sideVect)/4)*inputs.x;//6*Time.deltaTime*
             if (playerInput.Jump){
@@ -530,8 +532,10 @@ public class PlayerMovement : MonoBehaviour
 
         //jump: diagonal between normal and plane
 
+        //todo; make less crazy
+        
         if (playerInput.Jump){
-            Vector3 jumpDir = -gravDir*0.5f + wallNormal*0.87f;
+            Vector3 jumpDir = -gravDir*0.5f + wallNormal*0.75f;
             velocity += jumpDir*Mathf.Sqrt(-2f* jumpHeight * gravity);
         } /**/   
 
