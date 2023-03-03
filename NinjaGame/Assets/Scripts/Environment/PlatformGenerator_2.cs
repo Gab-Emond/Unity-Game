@@ -6,6 +6,8 @@ public class PlatformGenerator_2 : MonoBehaviour
 
     public GameObject platformPrefab;
 
+    public int platformSize = 1;
+
     bool [,,] spaceMatrix;//if false in [i][j][k], empty, if true, full
 
     Vector2[,] walls2d;//lines (origin+dir)
@@ -401,7 +403,7 @@ public class PlatformGenerator_2 : MonoBehaviour
         //number of cubes = points.Length;
         
         for(int i = 0;i<points.Length-1;i++){
-            List<Vector3> currPointsToAdd = BresenhamAlgo3D(points[i], points[i+1]);
+            List<Vector3> currPointsToAdd = BresenhamAlgo3D(points[i], points[i+1], platformSize);
             foreach(Vector3 currPoint in currPointsToAdd){
                 Instantiate(platformPrefab, currPoint, Quaternion.identity);
             }
@@ -414,18 +416,18 @@ public class PlatformGenerator_2 : MonoBehaviour
         //possible direction: marching cubes (more angular)
     }
 
-    List<Vector3> BresenhamAlgo3D(Vector3 n_1, Vector3 n_2,float stepSize=1){
+    List<Vector3> BresenhamAlgo3D(Vector3 n_1, Vector3 n_2,int stepSize=1){
         //note, does not add n_1 into list of points
         //used for chain of nodes not to spawn points twice (end last == new next)
         print("Bresenham");
         List<Vector3> listOfPoints = new List<Vector3>();
         
-        int x_1 = (int)n_1.x;
-        int y_1 = (int)n_1.y;
-        int z_1 = (int)n_1.z;
-        int x_2 = (int)n_2.x;
-        int y_2 = (int)n_2.y;
-        int z_2 = (int)n_2.z;
+        int x_1 = Mathf.FloorToInt(n_1.x/stepSize);
+        int y_1 = Mathf.FloorToInt(n_1.y/stepSize);
+        int z_1 = Mathf.FloorToInt(n_1.z/stepSize);
+        int x_2 = Mathf.FloorToInt(n_2.x/stepSize);
+        int y_2 = Mathf.FloorToInt(n_2.y/stepSize);
+        int z_2 = Mathf.FloorToInt(n_2.z/stepSize);
         
         int delta_x = (int)System.Math.Floor(System.Math.Abs(n_2.x - n_1.x));
         int delta_y = (int)System.Math.Floor(System.Math.Abs(n_2.y - n_1.y));
@@ -447,13 +449,13 @@ public class PlatformGenerator_2 : MonoBehaviour
         else
             z_s = -1;
 
-        listOfPoints.Add(new Vector3(x_1, y_1, z_1));//add n_1 into list of points
+        listOfPoints.Add(new Vector3(x_1*stepSize, y_1*stepSize, z_1*stepSize));//add n_1 into list of points
 
         // Driving axis is X-axis"
         if (delta_x >= delta_y && delta_x >= delta_z){
             p_1 = 2 * delta_y - delta_x;
             p_2 = 2 * delta_z - delta_x;
-            while (x_1 != x_2){
+            while (x_1*x_s < x_2*x_s){
                 x_1 += x_s;
                 if (p_1 >= 0){
                     y_1 += y_s;
@@ -465,14 +467,14 @@ public class PlatformGenerator_2 : MonoBehaviour
                 }
                 p_1 += 2 * delta_y;
                 p_2 += 2 * delta_z;
-                listOfPoints.Add(new Vector3(x_1, y_1, z_1));
+                listOfPoints.Add(new Vector3(x_1*stepSize, y_1*stepSize, z_1*stepSize));
             }   
         }
         // Driving axis is Y-axis"
         else if (delta_y >= delta_x && delta_y >= delta_z){
             p_1 = 2 * delta_x - delta_y;
             p_2 = 2 * delta_z - delta_y;
-            while (y_1 != y_2){
+            while (y_1*y_s < y_2*y_s){
                 y_1 += y_s;
                 if (p_1 >= 0){
                     x_1 += x_s;
@@ -484,14 +486,14 @@ public class PlatformGenerator_2 : MonoBehaviour
                 }
                 p_1 += 2 * delta_x;
                 p_2 += 2 * delta_z;
-                listOfPoints.Add(new Vector3(x_1, y_1, z_1));
+                listOfPoints.Add(new Vector3(x_1*stepSize, y_1*stepSize, z_1*stepSize));
             }   
         }
         // Driving axis is Z-axis"
         else{
             p_1 = 2 * delta_x - delta_z;
             p_2 = 2 * delta_y - delta_z;
-            while (z_1 != z_2){
+            while (z_1*z_s < z_2*z_s){
                 z_1 += z_s;
                 if (p_1 >= 0){
                     y_1 += y_s;
@@ -503,7 +505,7 @@ public class PlatformGenerator_2 : MonoBehaviour
                 }
                 p_1 += 2 * delta_y;
                 p_2 += 2 * delta_x;
-                listOfPoints.Add(new Vector3(x_1, y_1, z_1));
+                listOfPoints.Add(new Vector3(x_1*stepSize, y_1*stepSize, z_1*stepSize));
             }   
         }
         
@@ -512,7 +514,43 @@ public class PlatformGenerator_2 : MonoBehaviour
         return listOfPoints;
     }
 
-    
+    List<Vector3> GridRaster(Vector3 n_1, Vector3 n_2,float stepSize=1){
+        List<Vector3> listOfPoints = new List<Vector3>();
+
+        int x_1 = (int)n_1.x;
+        int y_1 = (int)n_1.y;
+        int z_1 = (int)n_1.z;
+        int x_2 = (int)n_2.x;
+        int y_2 = (int)n_2.y;
+        int z_2 = (int)n_2.z;
+
+        int delta_x = (int)System.Math.Floor(System.Math.Abs(n_2.x - n_1.x));
+        int delta_y = (int)System.Math.Floor(System.Math.Abs(n_2.y - n_1.y));
+        int delta_z = (int)System.Math.Floor(System.Math.Abs(n_2.z - n_1.z));
+
+        int x_s, y_s, z_s;
+
+        if (x_2 > x_1)
+            x_s = 1;
+        else
+            x_s = -1;
+        if (y_2 > y_1)
+            y_s = 1;
+        else
+            y_s = -1;
+        if (z_2 > z_1)
+            z_s = 1;
+        else
+            z_s = -1;
+
+        float t_delta_x=-1f/delta_x;
+        float t_delta_y=-1f/delta_y;
+        float t_delta_z=-1f/delta_z;
+
+
+
+        return listOfPoints;
+    }
 
     void OnDrawGizmos() {
 		Vector3 startPosition = startNode.position;
