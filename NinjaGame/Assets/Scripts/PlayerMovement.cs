@@ -8,6 +8,10 @@ public class PlayerMovement : MonoBehaviour
     public CharacterController controller;
     PlayerInput playerInput;
 
+    /////////animator(temp?)
+    PlayerController playerController; 
+    ////
+
     //grappleTest
 
     //public Grapple playerGrapple;    
@@ -24,14 +28,20 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 6f;
     
     Vector2 inputs;
+    bool playerJumped;
+    public bool PlayerJumped => playerJumped;
     private bool isGrounded;
     public bool IsGrounded => isGrounded;     // the Name property, getter
     ///////////////////////////
     bool isMovingIntoWall;
+    public bool IsMovingIntoWall => isMovingIntoWall;
 
     bool isNextToWall;
+    public bool IsNextToWall => isNextToWall;
     ////////////////////////////Slope
     bool isOnWall;
+    public bool IsOnWall => isOnWall;
+
     /////////////////////////////test
     bool isCrouching;
     public bool IsCrouching => isCrouching;     //getter
@@ -53,6 +63,7 @@ public class PlayerMovement : MonoBehaviour
         stamina = maxStamina;
         //playerGrapple = GetComponentInChildren<Grapple>();
         playerInput = GetComponent<PlayerInput>();
+        playerController = GetComponent<PlayerController>();
         //position_0 = transform.position;
         v_0 = velocity;
     }
@@ -88,6 +99,7 @@ public class PlayerMovement : MonoBehaviour
         */
 
         inputs = playerInput.input;
+        playerJumped = playerInput.Jump;
 
         RaycastHit hitInfo;
         ///////////////////checksphere
@@ -140,8 +152,10 @@ public class PlayerMovement : MonoBehaviour
             grapple(grappleTarget, inputs);
         }
 		else if(isMovingIntoWall){//error: if moving into wall from ground without stamina, speed keep increasing && (!isGrounded||isOnWall)
-			wallMove(wallNormal, inputs);
+			wallMove(wallNormal, inputs);//todo: put wallmove into normal?
 		}
+
+
         //else if(isMovingIntoWall && isOnWall){}//is next to slope 
         //else if(isMovingIntoWall && isGrounded)//boost jump up wall, 
         
@@ -151,6 +165,12 @@ public class PlayerMovement : MonoBehaviour
         }
         else{
             normal(inputs);
+            // if(velocity.sqrMagnitude==0){
+            //     playerController.SetStatus(Status.idle);
+            // }
+            // else{
+            //     playerController.SetStatus(Status.running);
+            // }
         }
 
         ////////////////////////////////////////////////////////
@@ -245,7 +265,7 @@ public class PlayerMovement : MonoBehaviour
         //if(crouched)
         //crouchmove?
 
-        /**/if(isOnWall){
+        if(isOnWall){
             print("onWall");
             //sliding down hill
             Vector3 gravDir = gravity*Vector3.ProjectOnPlane(transform.up, slopeNormal)*Time.deltaTime;//todo; change down to gravdir, if changes
@@ -263,7 +283,7 @@ public class PlayerMovement : MonoBehaviour
                 velocity = move;
                 velocity +=velAcc;
             }
-            if (playerInput.Jump){
+            if (playerJumped){
                 Vector3 jumpDir = -gravDir*0.5f + slopeNormal*0.5f;
                 velocity += jumpDir*Mathf.Sqrt(-2f* jumpHeight * gravity);
             }
@@ -271,7 +291,7 @@ public class PlayerMovement : MonoBehaviour
         else if(isGrounded && velocity.y<=0) {
 
             velocity.y = -1f;//-1f;
-            if (playerInput.Jump){
+            if (playerJumped){
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
 
@@ -332,7 +352,7 @@ public class PlayerMovement : MonoBehaviour
 
         if ((transform.position-target).sqrMagnitude < grappleDistance*grappleDistance ) {//not in tension
             normal(inputs);
-            if (playerInput.Jump){
+            if (playerJumped){
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
         }
@@ -429,7 +449,7 @@ public class PlayerMovement : MonoBehaviour
 
             velocity += (Vector3.Project(transform.forward, pullDir)/2 +Vector3.Project(transform.forward, sideVect)/4)*inputs.y;//6*Time.deltaTime*
             velocity += (Vector3.Project(transform.right, pullDir)/2 +Vector3.Project(transform.right, sideVect)/4)*inputs.x;//6*Time.deltaTime*
-            if (playerInput.Jump){
+            if (playerJumped){
                 velocity.y += Mathf.Sqrt(-2f* jumpHeight * gravity);//*ropeVect.y
                 //delegate jump for grapple script to connect
             }    
@@ -465,8 +485,10 @@ public class PlayerMovement : MonoBehaviour
 
 	
     //(wallClimb slight, before fall; enter and leave state?)
-    //include all cases in wallslide
-    //include stamina
+    //include all cases in wallslide(done)
+    //include stamina(done)
+    //keep player attached (wallslide) for short time if no input towards wall
+
     void wallMove( Vector3 wallNormal ,Vector2 inputs){//input already towards wall, to be in wall slide
         float cst;//friction constant
         float gVel = gravity*Time.deltaTime;
@@ -534,7 +556,7 @@ public class PlayerMovement : MonoBehaviour
 
         //todo; make less crazy
         
-        if (playerInput.Jump){
+        if (playerJumped){
             Vector3 jumpDir = -gravDir*0.5f + wallNormal*0.75f;
             velocity += jumpDir*Mathf.Sqrt(-2f* jumpHeight * gravity);
         } /**/   

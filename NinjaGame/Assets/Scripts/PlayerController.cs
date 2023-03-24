@@ -6,7 +6,7 @@ using UnityEngine.Events;
 //the brain
 
 
-public enum Status { idle, walking, crouching, sprinting, sliding, wallRunning, vaulting, grabbedLedge, climbingLedge, surfaceSwimming, underwaterSwimming }
+public enum Status { idle, walking, crouching, running, sliding, wallRunning, vaulting, grabbedLedge, climbingLedge}
 
 
 //If you wish to use a generic UnityEvent type you must override the class type.
@@ -14,7 +14,7 @@ public enum Status { idle, walking, crouching, sprinting, sliding, wallRunning, 
 
 [RequireComponent(typeof(PlayerInput))]
 [RequireComponent(typeof(PlayerMovement))]
-public class PlayerControl : MonoBehaviour
+public class PlayerController : MonoBehaviour
 {
 
     //note: headers: for in the unity editor, adds a title for things to control 
@@ -24,27 +24,56 @@ public class PlayerControl : MonoBehaviour
     PlayerInput playerInput;
     MouseLook mouseLook;
 
+    Status currStatus;
     Grapple playerGrapple;
 
-    Animator animator;
+    [SerializeField] Animator animator;
 
     void Start()
     {
         playerInput = GetComponent<PlayerInput>();
         movement = GetComponent<PlayerMovement>();
-        mouseLook = GetComponent<MouseLook>();
-        playerGrapple = GetComponent<Grapple>();
-        animator = GetComponent<Animator>();
+        //mouseLook = GetComponent<MouseLook>();
+        //playerGrapple = GetComponent<Grapple>();
+        animator = GetComponentInChildren<Animator>();
+        currStatus = Status.idle;
     }
 
     void Update()
     {
         //stateMachine, if 
-        
+        Vector2 inputs = playerInput.input;
+        animator.SetFloat("inputX",inputs.x);
+        animator.SetFloat("inputZ",inputs.y);
+
+        if(movement.IsGrounded){
+            animator.SetBool("grounded",true);
+            //if(playerInput.Jump)
+            
+        }
+        else{
+            animator.SetBool("grounded",false);//jump vs fall, add transition bool (jump) before going to air
+
+        }
+        if(movement.IsCrouching){
+            animator.SetBool("crouching",true);
+        }
+        else{
+            animator.SetBool("crouching",false);
+        }
+        // if(movement.IsGrappled){//can be grounded and grappled
+
+        // }
+
 
     }
 
-
+    //states
+    //grounded (and/or slope)
+    //falling?(!grounded)
+    //on wall
+    //grappled
+    //
 
 
     void AnimationHandler(){
@@ -53,7 +82,23 @@ public class PlayerControl : MonoBehaviour
 
     //if within range, melee attack not ranged?
 
+    void ChangeAnimatorBool(string trigger)
+    {
+        animator.SetBool(trigger,true);
+        //player input vector to get dir,
+        //velocity? maybe
+    }
 
+    public void SetStatus(Status status, float velocity){
+        
+        if(status!=currStatus){
+            animator.SetBool(currStatus.ToString(), false);
+            //ChangeAnimatorBool(status.ToString());
+            currStatus = status;
+            animator.SetBool(currStatus.ToString(), true);
+
+        }
+    }
 
 
 

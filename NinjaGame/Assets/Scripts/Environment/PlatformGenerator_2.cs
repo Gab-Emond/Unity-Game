@@ -44,6 +44,7 @@ public class PlatformGenerator_2 : MonoBehaviour
     //theta = baseTheta+gaussianRandom()
     //phi = basePhi+gaussianRandom
 
+    //for next step: quad tree, look at regions for intersections (circles and lines added to regions)
 
     void Start()
     {
@@ -139,7 +140,7 @@ public class PlatformGenerator_2 : MonoBehaviour
         float randR = Random.Range(minTurnRadius, Mathf.Min(wallsBounds[1]-wallsBounds[0],wallsBounds[3]-wallsBounds[2])/6);
         circleStartPos.Push(startPos2d);
         
-
+        //sets starting position of first circle
         if(Mathf.Min(startPos2d.x-wallsBounds[0],wallsBounds[1]-startPos2d.x)<
         Mathf.Min(startPos2d.y-wallsBounds[2],wallsBounds[3]-startPos2d.y)){
             if(startPos2d.x-wallsBounds[0]<wallsBounds[1]-startPos2d.x){
@@ -157,9 +158,10 @@ public class PlatformGenerator_2 : MonoBehaviour
                 circleCenterStack.Push(startPos2d+Vector2.down*randR);
             }
         }
-        
 
         circleRadiusStack.Push(randR);
+
+        //random circle path 2d till long enough to reach height if sloped
 
         while(pathTotalLength<minimumHorizLength&&iter<maxIteration){
             bool validPosFound = false;
@@ -167,6 +169,8 @@ public class PlatformGenerator_2 : MonoBehaviour
             Vector2 prevCenter=circleCenterStack.Peek();
             float prevRadius=circleRadiusStack.Peek();
             Vector2 samplePoint = new Vector2();
+
+            //chosing next circle 
             while(!validPosFound&&inner_Iter<maxIteration){
                 float randX = Random.Range(wallsBounds[0]+minTurnRadius,wallsBounds[1]-minTurnRadius);
                 float randY = Random.Range(wallsBounds[2]+minTurnRadius,wallsBounds[3]-minTurnRadius);
@@ -197,24 +201,24 @@ public class PlatformGenerator_2 : MonoBehaviour
                     closestDist = wallDists[j];
                 }
             }
-            //error: radius can overlap, might be causing the line between circles issues
+            
 
             float sampleRadius = Mathf.Min(Mathf.Min(wallsBounds[1]-wallsBounds[0],wallsBounds[3]-wallsBounds[2])/4,closestDist);//Random.Range(minTurnRadius,Mathf.Min(Mathf.Min(wallsBounds[1]-wallsBounds[0],wallsBounds[3]-wallsBounds[2])/3,closestDist));
 
             Vector2[] points = Utility.Math.MathUtility.LineBetweenCircles(prevCenter,prevRadius,samplePoint,sampleRadius,clockWiseSide?-1:1);
             
             circleEndPos.Push(points[0]);
-            float pathOnPrevCircle = Utility.Math.MathUtility.ArcLength2D(circleStartPos.Peek()-circleCenterStack.Peek(),circleEndPos.Peek()-circleCenterStack.Peek(),circleRadiusStack.Peek());
-            //pathOnPrevCircle = clockWiseSide?2*Mathf.PI*circleRadius.Last.Value-pathOnPrevCircle:pathOnPrevCircle;
+            
+            // arc length to sum to path length
 
+            float pathOnPrevCircle = Utility.Math.MathUtility.ArcLength2D(circleStartPos.Peek()-circleCenterStack.Peek(),circleEndPos.Peek()-circleCenterStack.Peek(),circleRadiusStack.Peek());
+            
             if(Utility.Math.MathUtility.Ccw(circleCenterStack.Peek(),circleStartPos.Peek(),circleEndPos.Peek())==clockWiseSide){//if not the same rotation dir
                 pathOnPrevCircle = 2*Mathf.PI*circleRadiusStack.Peek()-pathOnPrevCircle;//larger side
             }
-            //else same rotation dir; smaller side
+            //if same rotation dir; smaller side
 
-            //todo: insert points between start and end on arc
-
-            //getpointsinarc
+            //////makes points on arc for rasterization (using line, circle method todo)
 
             Vector2[] centerPoints = Utility.Math.MathUtility.GetPointsInArc(circleCenterStack.Peek(),circleRadiusStack.Peek(),circleStartPos.Peek(),circleEndPos.Peek(),clockWiseSide);
             pathAllPointPos.Push(circleStartPos.Peek());
@@ -223,6 +227,9 @@ public class PlatformGenerator_2 : MonoBehaviour
                 pathAllPointPos.Push(point);
             }
             pathAllPointPos.Push(circleEndPos.Peek());
+            //////////
+
+            ////adds final points, if circles are touching or not
 
             if(points.Length==2){
                 
@@ -233,7 +240,6 @@ public class PlatformGenerator_2 : MonoBehaviour
             else{//touching, only one point
                 circleStartPos.Push(points[0]);
             }
-            //error, if touching uses center?
 
 
             circleCenterStack.Push(samplePoint);
@@ -249,11 +255,10 @@ public class PlatformGenerator_2 : MonoBehaviour
 
         }
 
-        //section links final circle to end pos, two ways depending on if outside or inside
-        
+        ////// this section links final circle to end pos, two ways depending on if outside or inside
         
         if((circleCenterStack.Peek()-endPos2d).magnitude>circleRadiusStack.Peek()){
-            //point to circle method
+            //point to circle connection method
             Vector2[] points= Utility.Math.MathUtility.LineCirclePoint(circleCenterStack.Peek(),circleRadiusStack.Peek(),endPos2d,clockWiseSide?-1:1);
             circleEndPos.Push(points[0]);
 
@@ -354,28 +359,8 @@ public class PlatformGenerator_2 : MonoBehaviour
 
         //while(path<minimum path for reaching endpoint)
 
-        //2.choose random circle to expand (change to r = r+random)
-        //2a. choose random point in possible space (away from walls, further from before+after circle)
-        
-        //could pseudo hash, if within circles , send away from them
-        //if within walls, modulo around other side
-
-        //split space into grid, remove unplacable points
-
-        //for(int i = center.x-radius;i<center.x+radius;i++)
-        //float squareY = (int) Mathf.Sqrt(radius*radius-i*i);
-        //for(int j  = center.y-squareY;j<center.y+squareY;j++)
-        //grid[i,j] = false;
-
-        //how to pick only from valid
-
-        
-        //if((pos-center).sqrMagnitude<r+r_min)
-        //restart next iteration
-        //push away by r amount, looping around inside space
-        
-        //if (close to end && path done)
-        //end path
+        //2.choose random point in possible space (away from walls, further from before+after circle)
+        //2a. choose random radius to expand (bounded by closest obstacle, walls or prev circle)
 
 
         //3.check path length
@@ -384,8 +369,7 @@ public class PlatformGenerator_2 : MonoBehaviour
 
         //if path length>minimum path to reach end
         //return path
-        //else
-        //choose random to expand
+        
 
         
 

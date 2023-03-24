@@ -31,7 +31,7 @@ public class Grapple : MonoBehaviour {
         else if (Input.GetMouseButtonUp(1)) {
             StopGrapple();
         }
-        if(Input.GetButtonDown("Jump")){
+        if(playerMov.PlayerJumped){
             StopGrapple();
         }
         
