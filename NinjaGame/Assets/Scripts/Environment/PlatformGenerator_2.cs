@@ -44,7 +44,8 @@ public class PlatformGenerator_2 : MonoBehaviour
     //theta = baseTheta+gaussianRandom()
     //phi = basePhi+gaussianRandom
 
-    //for next step: quad tree, look at regions for intersections (circles and lines added to regions)
+    
+    //for next step: quad tree,spacial hash map, look at regions for intersections (circles and lines added to regions)
 
     void Start()
     {
@@ -312,7 +313,7 @@ public class PlatformGenerator_2 : MonoBehaviour
 
 
 
-
+        //slope up section
 
         circlesPosGlobal = circleCenterStack.ToArray();
         circlesRadiusGlobal = circleRadiusStack.ToArray();
@@ -355,13 +356,13 @@ public class PlatformGenerator_2 : MonoBehaviour
 
         
 
-        //1. for distance (x,0,z) between start and end, seperate into spheres of diameters d > 2*r_min for according to max 
+        //1. while distance (x,0,z) between start and end, not large enough to slope up to target,
 
         //while(path<minimum path for reaching endpoint)
 
         //2.choose random point in possible space (away from walls, further from before+after circle)
-        //2a. choose random radius to expand (bounded by closest obstacle, walls or prev circle)
-
+        //2a. choose random amount to expand (bounded by closest obstacle, walls or prev circle)
+        //2b. add to path length
 
         //3.check path length
         //3a. save path lenght to lower check time; 
@@ -369,22 +370,23 @@ public class PlatformGenerator_2 : MonoBehaviour
 
         //if path length>minimum path to reach end
         //return path
-        
+
+        //todo: 
+        //4 spacial hash map, find intersections        
 
         
 
         return posTemp;//new Vector3[1];
     }
 
-   
-
-    Vector3 AverageVect(Vector3 line_1, Vector3 line_2){
-        return (line_1+line_2)/2;
-    }
 
     //for array of points, return the platforms that connects them
     void NodesToPlatformMesh(Vector3[] points){
         //number of cubes = points.Length;
+        
+
+        //todo: change rasterization method, could use a*
+        //or just vary brensenham
         
         for(int i = 0;i<points.Length-1;i++){
             List<Vector3> currPointsToAdd = BresenhamAlgo3D(points[i], points[i+1], platformSize);
@@ -498,6 +500,9 @@ public class PlatformGenerator_2 : MonoBehaviour
         return listOfPoints;
     }
 
+    //todo: add sides on brensenham, no full diagonals (change on x, y, z)
+        //aka: if z, y, x change in one iter, convert to (one var change)+(two var change) in one iter
+    
     List<Vector3> GridRaster(Vector3 n_1, Vector3 n_2,float stepSize=1){
         List<Vector3> listOfPoints = new List<Vector3>();
 

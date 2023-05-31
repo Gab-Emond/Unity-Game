@@ -8,8 +8,14 @@ namespace Enemies.GuardBotFSM{
     public class GuardBotFSM : StateMachine, IParentingCollider, IDamageable  {
         public LayerMask viewMask;
 
-      	public Light spotlight;
-        private Color originCol;
+      	//public Light spotlight;
+
+        public GameObject spotLight;
+        public Material spotlightMaterial;
+        public Material eyeMaterial;
+        Color originEyeColor;
+        Color originSpotLightColor;
+
 
         Rigidbody rb;
         public Rigidbody Rb => rb; 
@@ -18,10 +24,11 @@ namespace Enemies.GuardBotFSM{
         public float turnSpeed;
         public float waitTime;
         public float wakeUpTime;
+        public float alertTime = 5;
         bool canSeePlayer = false;
-        bool targetsInViewCollider = false;
-        public bool TargetsInViewCollider => targetsInViewCollider; 
-        HashSet<GameObject> targetsInView = new HashSet<GameObject>();
+        // bool targetsInViewCollider = false;
+        // public bool TargetsInViewCollider => targetsInViewCollider; 
+        public HashSet<GameObject> targetsInView = new HashSet<GameObject>();
         
         //initState = setInitState;
 
@@ -54,10 +61,13 @@ namespace Enemies.GuardBotFSM{
             // foreach (var kvp in states) {
             //     Debug.Log( kvp.Value.stateName);//kvp.Key+" "+
             // }
-
             
+            spotlightMaterial = spotLight.GetComponent<MeshRenderer>().materials[1];//necessary, to get instance of this object only
+            originEyeColor = eyeMaterial.color;
+            originSpotLightColor = spotlightMaterial.color;
             
         }
+        
         //start calls init state
         protected override BaseState GetInitState(){//each state machine implemented changes this method to return desired starting state,
             return this.states[typeof(Patrol)];
@@ -98,20 +108,31 @@ namespace Enemies.GuardBotFSM{
         public void OnChildTriggerEnter(Collider collider){
             if(collider.tag == "Player"){
                 targetsInView.Add(collider.gameObject);
-                targetsInViewCollider = true;
+                //targetsInViewCollider = true;
             }
         }
 
         public void OnChildTriggerExit(Collider collider){
             if(collider.tag == "Player"){
                 targetsInView.Remove(collider.gameObject);
-                targetsInViewCollider = false;
+                //targetsInViewCollider = false;
             }
 
 
         }
 
         ///////////////////////////////
+        public void ChangeLightColor(Color _spotColor, Color _eyeColor){//change eyes+change spotlight(one? two methods)
+            //todo: use  MaterialPropertyBlock.SetColor
+            spotlightMaterial.SetColor("_Color", _spotColor);
+
+            eyeMaterial.SetColor("_Color", _eyeColor);
+        }
+
+        public void SetOriginColor(){
+            spotlightMaterial.SetColor("_Color", originSpotLightColor);
+            eyeMaterial.SetColor("_Color", originEyeColor);
+        }
 
         bool CanSeeTarget(Transform target) {//todo, see if way to invert ray
             RaycastHit hitInfo;
@@ -128,16 +149,16 @@ namespace Enemies.GuardBotFSM{
             }
             //Debug.DrawLine (target.position-vectResult, target.position, Color.yellow);
             
-            else if(Physics.Linecast(target.position-vectResult, target.position, out hitInfo)){//if nothing is blocking the player (left)
+            else if(Physics.Linecast(target.position-vectResult, target.position, out hitInfo)){
                 
-                if(!Physics.Linecast(transform.position, hitInfo.point,viewMask)){
+                if(!Physics.Linecast(transform.position, hitInfo.point,viewMask)){//if nothing is blocking the player (left)
                     canSee = true;
                     //Debug.DrawLine(transform.position, hitInfo.point, Color.green);
                 }
             }
-            else if(Physics.Linecast(target.position+vectResult, target.position, out hitInfo)){//if nothing is blocking the player (right)
+            else if(Physics.Linecast(target.position+vectResult, target.position, out hitInfo)){
                 
-                if(!Physics.Linecast(transform.position, hitInfo.point,viewMask)){
+                if(!Physics.Linecast(transform.position, hitInfo.point,viewMask)){//if nothing is blocking the player (right)
                     canSee = true;
                     //Debug.DrawLine(transform.position, hitInfo.point, Color.green);
                 }

@@ -17,12 +17,12 @@ public class TestPoisson : MonoBehaviour {
 	List<Vector3> points;
 
 	void OnValidate() {
-		// points = PoissonDiscSampling.GeneratePoints3D(radius, regionSize, rejectionSamples);
-		// List<Vector3> temp = new List<Vector3>();
-		// foreach (Vector3 point in points){
-		// 	temp.Add(point+transform.position);
-		// }
-		// points = temp;
+		points = PoissonDiscSampling.GeneratePoints3D(radius, regionSize, rejectionSamples);
+		List<Vector3> temp = new List<Vector3>();
+		foreach (Vector3 point in points){
+			temp.Add(point+transform.position);
+		}
+		points = temp;
 
 		
 		// int i = 0;

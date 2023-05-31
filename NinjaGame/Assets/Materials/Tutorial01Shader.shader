@@ -46,7 +46,7 @@
             float4 _MainTex_ST;
 
             //called for every vertex from a material (lets you deform object)
-            v2f vert (appdata v)//in (v)
+            v2f vert (appdata v)//in (v) //can move vertex
             {
                 v2f o;//out
 
@@ -56,6 +56,19 @@
                 UNITY_TRANSFER_FOG(o,o.vertex);
                 return o;
             }
+
+
+            //note shader var types: (half & fixed; only for certain platforms (ex: phone or low precision))
+            //float. Size: (32 Bits) Highest Precision. Usage examples: World Positions, Texture coordinates.
+            //half. Size: (16 Bits) Half float. ...
+            //fixed. Size: (11 bits) Lowest float precision. ...
+            //int. Size(32 Bits) the regular C# int. 
+           
+            //cast example: float4 4dvect; float2 2dvect = 4dvect.xy;
+
+           //sv_position: screen vertex position
+           //sv target: screen target (where it should return
+           
 
             //fragment(pixel shader) covert vertex, to 3d space; return colors
             fixed4 frag (v2f i) : SV_Target 

@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Pool;
 using Utility.Math;//own 
 /// Modified from Dave's free bullet script
 /// 
@@ -17,9 +18,25 @@ public class Projectile : MonoBehaviour
     public GameObject explosion;
     public LayerMask whatIsEntities;
     
+    //ObjectPool, either reference or an OnDisable event
+
+    IObjectPool<Projectile> pool;
+
+    public IObjectPool<Projectile> Pool
+    {
+        get
+        {
+            return pool;
+        }
+        set
+        {
+            this.pool = value;
+        }
+    }
+
     //Stats
     [Range(0f,1f)]
-    public float bounciness;
+    //public float bounciness;
     public bool useGravity;
 
     //Damage
@@ -34,8 +51,10 @@ public class Projectile : MonoBehaviour
     public bool sticksToTarget;//todo;toggle if object stays in place or no
 
 
-    PhysicMaterial physics_mat;
-
+    PhysicMaterial physics_mat;//todo: single physics mat accross all SAME projectile
+    
+    [Range(0,1)]
+    public float crossAirResistance = .5f;
 
     private Vector3 prevPos;
     private RaycastHit hitInfo;
@@ -50,13 +69,12 @@ public class Projectile : MonoBehaviour
     //trailrenderer? selon si on veut
 
     //awake?
+    //private on enable
 
-    private void Start()
+    private void Start()//Start will not run again if the component is re-enabled
     {
-        prevPos = transform.position;
         Setup();
-        //StartCoroutine(DestroyBulletAfterTime(gameObject, maxLifetime));
-        Destroy(gameObject,maxLifetime);
+        //Destroy(gameObject,maxLifetime);
         //error: invoked twice
         //Launch(100f);
 
@@ -78,16 +96,8 @@ public class Projectile : MonoBehaviour
                 
                 //Don<t count collisions with (own?) player:
                 if (hitInfo.collider.CompareTag("Player")) return;
-                /*
-                if(hitInfo.collider.gameObject.GetComponent<DroneExplosive>() != null){
-                    hitInfo.collider.gameObject.GetComponent<DroneExplosive>().TakeHit();
-                }
-
-                if(hitInfo.collider.gameObject.GetComponent<DroneShooter>() != null){
-                    hitInfo.collider.gameObject.GetComponent<DroneShooter>().TakeHit();
-                }
-                */
-                IDamageable damagedEntity = hitInfo.collider.gameObject.GetComponent<IDamageable>();
+                
+                IDamageable damagedEntity = hitInfo.collider.GetComponent<IDamageable>();//.gameObject
                 if(damagedEntity != null){
                     damagedEntity.TakeHit(transform.position-prevPos, hitInfo.point);
                 }
@@ -98,14 +108,23 @@ public class Projectile : MonoBehaviour
                 
                 //rb.constraints = RigidbodyConstraints.FreezeAll;
                 
-                rb.isKinematic = true;
-                rb.detectCollisions = false;
-                //Destroy(rb);
-                transform.position = hitInfo.point;
-                
-                //err with setparent in unity, if object scaled asymetrically, rotation will mess up
-                this.transform.SetParent(hitInfo.transform, true); 
-                
+                ///////////region/////////////if stuck in something
+                if (!hitInfo.collider.CompareTag("Impenetrable")){
+                    rb.isKinematic = true;
+                    rb.detectCollisions = false;
+                    //Destroy(rb);
+                    transform.position = hitInfo.point;
+                    //err with setparent in unity, if object scaled asymetrically, rotation will mess up
+                    this.transform.SetParent(hitInfo.transform, true); 
+                }
+                //////////
+                //else bounce(tag:)
+                else{
+                    //rb.detectCollisions = true;
+                    Vector3 initVel = rb.velocity;
+                    rb.velocity = Vector3.Reflect(rb.velocity,hitInfo.normal)/16;
+                    rb.AddForceAtPosition(Vector3.ProjectOnPlane((Random.onUnitSphere*initVel.magnitude/8)+(initVel/8), hitInfo.normal), hitInfo.point,ForceMode.Impulse);
+                }//*rb.velocity.magnitude/2
 
                 if(explode){
                     Explode();
@@ -123,10 +142,8 @@ public class Projectile : MonoBehaviour
 
     }
 
-    private void FixedUpdate() {
-        if(useGravity && !hitSomething){
-            rb.AddForce(MathUtility.LinFriction(Vector3.Project(transform.up, rb.velocity)));    //, ForceMode.Acceleration vs Impulse
-        }
+    protected virtual void FixedUpdate() {
+        ExtraPhysicsBehaviour();
     }
 
     
@@ -156,6 +173,53 @@ public class Projectile : MonoBehaviour
 
     }
 
+    protected virtual void ExtraPhysicsBehaviour(){
+        if(useGravity && !hitSomething){
+            rb.AddForce(MathUtility.LinFriction(Vector3.Project(transform.up, rb.velocity),crossAirResistance));    //, ForceMode.Acceleration vs Impulse
+        }
+    }
+
+    //on collision also possible for collision, for slower projectiles
+    protected virtual void OnHitSomething(){
+        //projectile hit something
+
+        //Don't count collisions with self(?)
+        //if (hitInfo.collider.CompareTag("Bullet")) return;
+        
+        //Don<t count collisions with (own?) player:
+        if (hitInfo.collider.CompareTag("Player")) return;
+        
+        IDamageable damagedEntity = hitInfo.collider.GetComponent<IDamageable>();//.gameObject
+        if(damagedEntity != null){
+            damagedEntity.TakeHit(transform.position-prevPos, hitInfo.point);
+        }
+        //note: sendmessage("takehit") couldve worked too, without requiring idamageable, no error if doesnt have
+
+
+        hitSomething = true;
+        
+        ///////////region/////////////if stuck in something
+        rb.isKinematic = true;
+        rb.detectCollisions = false;
+        //Destroy(rb);
+        transform.position = hitInfo.point;
+        
+        //err with setparent in unity, if object scaled asymetrically, rotation will mess up
+        this.transform.SetParent(hitInfo.transform, true); 
+        //////////
+        //else bounce(tag:)
+
+        if(explode){
+            Explode();
+        }
+        else{
+            //hitInfo
+            //StartCoroutine(DestroyBulletAfterTime(gameObject, hitLifetime));
+            Destroy(gameObject,hitLifetime);
+            //print("hit");
+        }
+    }
+
     private void Explode()
     {
         //Instantiate explosion
@@ -168,7 +232,10 @@ public class Projectile : MonoBehaviour
                 //Get component of enemy and call Take Damage
 
                 //Just an example!
-                ///enemies[i].GetComponent<ShootingAi>().TakeDamage(explosionDamage);
+                IDamageable damagedEntity = entities[i].GetComponent<IDamageable>();
+                if(damagedEntity != null){
+                    damagedEntity.TakeHit(transform.position-prevPos, hitInfo.point);
+                }
 
                 //Add explosion force (if enemy has a rigidbody)
                 if (entities[i].GetComponent<Rigidbody>())
@@ -176,35 +243,58 @@ public class Projectile : MonoBehaviour
             }
         }
         //Add a little delay, just to make sure everything works fine
-        //StartCoroutine(DestroyBulletAfterTime(gameObject, 0.0625f));
-        Destroy(gameObject,0.0625f);
+        StartCoroutine(CleanupAfterTime(0.0625f));//could be an invoke
+        //Destroy(gameObject,0.0625f);
+        
     }
     
-    
 
-    private IEnumerator DestroyBulletAfterTime(GameObject other, float delay){
-        //delete bullet
-        yield return new WaitForSeconds(delay);
-        Destroy(other);
+    // private IEnumerator DisableSelfAfterTime(GameObject self, float delay){
+    //     //disable bullet and return to pool
+    //     yield return new WaitForSeconds(delay);
+    //     self.SetActive(false);
+    // }
+
+    private IEnumerator CleanupAfterTime(float delay){
+        if(pool!=null){
+            yield return new WaitForSeconds(delay);
+            pool.Release(this);
+        }
+        else{
+            yield return new WaitForSeconds(delay);
+            Destroy(gameObject);
+        }
     }
-    
-    
 
-
-    private void Setup()
+    private void Setup()//add pools that contains it?
     {   
         rb = this.GetComponent<Rigidbody>();
-        //Create a new Physic material
-        physics_mat = new PhysicMaterial();
-        physics_mat.bounciness = bounciness;
-        physics_mat.frictionCombine = PhysicMaterialCombine.Minimum;
-        physics_mat.bounceCombine = PhysicMaterialCombine.Maximum;
+        //Create a new Physic material//use scriptable objects
+        // physics_mat = new PhysicMaterial();//no need should all have same
+        // physics_mat.bounciness = bounciness;
+        // physics_mat.frictionCombine = PhysicMaterialCombine.Minimum;
+        // physics_mat.bounceCombine = PhysicMaterialCombine.Maximum;
+
         //Assign material to collider
         //GetComponent<SphereCollider>().material = physics_mat;
-
+        
+        rb.detectCollisions = true;
         //Set gravity
         rb.useGravity = useGravity;
         hitSomething = false;
+    }
+
+    private void OnEnable() {
+        prevPos = transform.position;
+        hitSomething = false;
+        StartCoroutine(CleanupAfterTime(maxLifetime));
+
+    }
+
+    private void OnDisable() {//to stop any movement when pooled? verify if necessary
+        rb.isKinematic = true;
+        rb.isKinematic = false;
+        StopAllCoroutines();
     }
 
     /// Just to visualize the explosion range

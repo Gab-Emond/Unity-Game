@@ -17,6 +17,13 @@ public class EnemyController : MonoBehaviour
     public static event AlarmDelegate alarmAnnouncement;//unity events, allow drag n drop from editor, but slower
     //event alert, static, no direct reference to enemy controller needed
 
+    //event vs direct method call:
+
+    /*Method call = "Do this specific thing"
+
+    Event raise = "If anyone is listening and cares, this thing just happened."
+    */
+
     void Start() {
         //find enemies within a range
         //Init();
@@ -37,12 +44,16 @@ public class EnemyController : MonoBehaviour
         int i = 0;
         while(i<repeatNumber) {
             i++;
+
+            ///////// if event working, no need for this section
+
             //SearchForTarget(param1, param2, ...);
             foreach (Enemy enemy in enemies){
                 enemy.Alert(player);
             }
+            //////////
 
-            //Alert event, subscribe all enemies to it
+            //Alert event, subscribe all enemies to it (for all enemies, start by running findobjectoftype enemycontroller to add the script theyll subscribe to)
             if(alarmAnnouncement != null){
                 alarmAnnouncement(player);//put player gameobject in alarm
             }

@@ -59,8 +59,14 @@ public class TrainingRoomWalls : MonoBehaviour {
         return startPoints;
     }
 
+    //Heap<Cube> cubes;//keep a tree of the cube positions
 
-    public void PathingPoints(Vector3[] startPoints, Vector3[] endPoints, GameObject[] cubes,  Vector3 sampleRegionSize, Vector3 center){
+    bool[,,] occupiedSpace;//empty cube space, size of bounds of rectangle, true if occupied false if not (n**3 space)
+    //new empty bool will be false
+    public bool IsOccupied(Vector3 targetPoint){
+        return occupiedSpace[(int)targetPoint.x,(int)targetPoint.y,(int)targetPoint.z];
+    }  
+    public void PathingPoints(Vector3[] startPoints, Vector3[] endPoints, Cube[] cubes,  Vector3 sampleRegionSize, Vector3 center){
 
             //go to spot
 
@@ -71,7 +77,27 @@ public class TrainingRoomWalls : MonoBehaviour {
             //repeat
             //else,moving one space
             float cubeSpeed = 1;
-            
+            bool allCubesAtGoal = false;
+
+            while(!allCubesAtGoal){
+                int i  = 0;
+                foreach (var cube in cubes)
+                {
+                    if(!IsOccupied(cubes[i].nextNode)){
+                        //cubes[i] start moving towards next node
+                        //
+                    }
+                    else{
+                        Pathfinding(cube.currNode, cube.endNode);
+                    }
+                    
+                    i++;
+                }
+                
+
+
+            }
+
 
             for(int i = 0; i<startPoints.Length;i++){
                 Vector3 path = endPoints[i]-startPoints[i];
@@ -100,16 +126,85 @@ public class TrainingRoomWalls : MonoBehaviour {
     }
 
     class Cube{
-        GameObject thisCubeObject;
+        GameObject thisObject;
+
+        public Transform transform;
         Stack<Vector3> pathNodes;
 
-        Vector3 nextNode;
+        public Vector3 nextNode{get; set;}
+        public Vector3 currNode;
+        Vector3 currPos;
+        public Vector3 endNode;
+        float speed;
 
-        public Cube(){//constructor
+        public Cube(Vector3 _endGoal, Vector3 _currNode, GameObject prefab){//constructor
+            endNode = _endGoal;
+            currNode = _currNode;
+            currPos = currNode;
+            thisObject = Instantiate(prefab,currNode,Quaternion.identity);
+            transform = thisObject.transform;
+        }
 
+        public void SetNextNode(){
+            currNode = nextNode;
+            nextNode = pathNodes.Pop();
         }
         private void Update(float deltaTime) {
             
+        }
+
+        void MoveToNextNode(){//assumes next node correct
+            
+            if(currPos!=nextNode){
+
+            }
+            else{
+                SetNextNode();
+                //nextNode = Pathfinding(endGoal);
+                //change 
+            }
+        }
+
+        static Vector3[] FizzBuzzRaster(Vector3 start, Vector3 end){//assumes start&& end on whole numbers(int)
+        // length=longest+mid+shortest-2 
+            Vector3 deltaV = end-start;
+            int distX = ((int)deltaV.x);
+            int distY = ((int)deltaV.y);
+            int distZ = ((int)deltaV.z); 
+
+            int pathLength = (int)Vector3.Dot(deltaV,Vector3.one);
+
+            Vector3[] path = new Vector3[pathLength];//dx+dy+dz = vectorDelta*vector(1,1,1)
+
+            //get 2d vector3
+            //vect forward, upward, side, ordered by size
+
+            //aka; switch row, elementary matrix operation
+            int maxLen;
+            int midLen;
+            int shortestLen;
+            if(distX>=distY&&distX>=distZ){
+                maxLen = distX;
+            }
+            else if(distZ>=distY&&distZ>=distX){
+                maxLen = distZ;
+            }
+            else if(distY>=distX&&distY>=distZ){
+                maxLen = distY;
+            }
+
+            for (int i = 0; i < pathLength; i++)
+            {
+                if(i%distX)
+                if(i%distY)
+                if(i%distZ)
+
+                //one for each of longest value
+
+                //at ax for x = longestlen/otherlen
+            }
+
+            return path;
         }
 
     }

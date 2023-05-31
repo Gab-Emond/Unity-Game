@@ -11,6 +11,8 @@ public class Heap<T> where T : IHeapItem<T> {
 	https://docs.microsoft.com/en-us/dotnet/csharp/language-reference/keywords/where-generic-type-constraint
 	*/
 	
+	/*Heaps are concrete data structures, whereas priority queues are abstract data structures. */
+
 	T[] items;
 	int currentItemCount;
 	

@@ -4,6 +4,7 @@ using Utility.Math;
 
 public class PlayerMovement : MonoBehaviour
 {
+    //todo: hitbox "pinching": if lower ceiling, can go under, (or ledge stay at same leve?)
     
     public CharacterController controller;
     PlayerInput playerInput;
@@ -28,8 +29,12 @@ public class PlayerMovement : MonoBehaviour
     public float speed = 6f;
     
     Vector2 inputs;
-    bool playerJumped;
-    public bool PlayerJumped => playerJumped;
+    bool jumpKeyDown;
+    public bool JumpKeyDown => jumpKeyDown;
+
+    bool jumpKeyHeld;
+
+    public float shortJumpMultiplier = 2f;
     private bool isGrounded;
     public bool IsGrounded => isGrounded;     // the Name property, getter
     ///////////////////////////
@@ -99,7 +104,8 @@ public class PlayerMovement : MonoBehaviour
         */
 
         inputs = playerInput.input;
-        playerJumped = playerInput.Jump;
+        jumpKeyDown = playerInput.Jump;
+        jumpKeyHeld = playerInput.JumpHeld;
 
         RaycastHit hitInfo;
         ///////////////////checksphere
@@ -138,7 +144,8 @@ public class PlayerMovement : MonoBehaviour
         /*if(isNextToWall)
             print("wall" + wallNormal);
         */
-        isCrouching = playerInput.crouching;
+        isCrouching = playerInput.crouching;//tech dept, change to inputcrouching
+        //iscrouching = inputcrouching&&grounded&&!grappled
     }
 
     private void FixedUpdate() {
@@ -283,7 +290,7 @@ public class PlayerMovement : MonoBehaviour
                 velocity = move;
                 velocity +=velAcc;
             }
-            if (playerJumped){
+            if (jumpKeyDown){
                 Vector3 jumpDir = -gravDir*0.5f + slopeNormal*0.5f;
                 velocity += jumpDir*Mathf.Sqrt(-2f* jumpHeight * gravity);
             }
@@ -291,7 +298,7 @@ public class PlayerMovement : MonoBehaviour
         else if(isGrounded && velocity.y<=0) {
 
             velocity.y = -1f;//-1f;
-            if (playerJumped){
+            if (jumpKeyDown){
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
 
@@ -301,8 +308,15 @@ public class PlayerMovement : MonoBehaviour
         }
        
         else
-        {
-            velocity.y += gravity*Time.deltaTime; //gravity negative
+        {//if in the air
+
+            //to add lower jump if key released before max
+            if(!jumpKeyHeld && velocity.y>0){
+                velocity.y += shortJumpMultiplier*gravity*Time.deltaTime;
+            }
+            else{
+                velocity.y += gravity*Time.deltaTime; //gravity negative
+            }
             
 
             if(Vector2.SqrMagnitude(new Vector2(velocity.x,velocity.z))>(speed*speed + 0.5f)){
@@ -336,7 +350,6 @@ public class PlayerMovement : MonoBehaviour
 
     
 
-
     void grapple(Vector3 target, Vector2 inputs){//shorten over time?
         
         Vector3 ropeVect; 
@@ -352,7 +365,7 @@ public class PlayerMovement : MonoBehaviour
 
         if ((transform.position-target).sqrMagnitude < grappleDistance*grappleDistance ) {//not in tension
             normal(inputs);
-            if (playerJumped){
+            if (jumpKeyDown){
                 velocity.y = Mathf.Sqrt(jumpHeight * -2f * gravity);
             }
         }
@@ -449,7 +462,7 @@ public class PlayerMovement : MonoBehaviour
 
             velocity += (Vector3.Project(transform.forward, pullDir)/2 +Vector3.Project(transform.forward, sideVect)/4)*inputs.y;//6*Time.deltaTime*
             velocity += (Vector3.Project(transform.right, pullDir)/2 +Vector3.Project(transform.right, sideVect)/4)*inputs.x;//6*Time.deltaTime*
-            if (playerJumped){
+            if (jumpKeyDown){
                 velocity.y += Mathf.Sqrt(-2f* jumpHeight * gravity);//*ropeVect.y
                 //delegate jump for grapple script to connect
             }    
@@ -556,7 +569,7 @@ public class PlayerMovement : MonoBehaviour
 
         //todo; make less crazy
         
-        if (playerJumped){
+        if (jumpKeyDown){
             Vector3 jumpDir = -gravDir*0.5f + wallNormal*0.75f;
             velocity += jumpDir*Mathf.Sqrt(-2f* jumpHeight * gravity);
         } /**/   
@@ -584,6 +597,8 @@ public class PlayerMovement : MonoBehaviour
                 float projectWall = wallNormal.y;//normalized, hence angle directly
                 //print(projectWall);
                 
+                
+
                 if(projectWall <= 0.375f && projectWall >= -0.125f ){ 
 			        //wallslide
                     return true; 
@@ -603,10 +618,16 @@ public class PlayerMovement : MonoBehaviour
         //return (Physics.CapsuleCastAll(top, bottom, radius, move , maxDist, layer, out hit).Length >= 1);//throws capsule in direction indicated
     }
 
-    /*
+    /**/
     void OnControllerColliderHit(ControllerColliderHit hit){
+
+        if(isGrappled){
+            //print("hit speed: "+ Vector3.Project(velocity,hit.normal));
+            velocity -= Vector3.Project(velocity,hit.normal);
+            //print("result: "+ velocity);
+        }
     }
-    */
+    
 
 }
 

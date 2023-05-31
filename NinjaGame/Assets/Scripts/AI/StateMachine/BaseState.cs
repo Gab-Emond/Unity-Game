@@ -19,7 +19,7 @@ namespace Utility.StateMachine
         
         public virtual void UpdateLogic(){}
         
-        public virtual void UpdatePhysics(){}
+        public virtual void UpdatePhysics(){}//not truly useful unless moving in update
 
         //public virtual void CheckTransitions(){}
 

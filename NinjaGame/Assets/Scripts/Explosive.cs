@@ -7,20 +7,8 @@ public class Explosive : MonoBehaviour
     float radius;
     float rayNum;
 
-    float[] damageRange = new float[2];//reminder, array fixed size, list is linked
+    float[] damageRange = new float[2];//reminder, array fixed size, list is changeable but slower access
 
-
-    // Start is called before the first frame update
-    void Start()
-    {
-        
-    }
-
-    // Update is called once per frame
-    void Update()
-    {
-    
-    }
 
     void Explode() {
         var exp = GetComponent<ParticleSystem>();
@@ -34,12 +22,17 @@ public class Explosive : MonoBehaviour
     }
 
 
-    void ExplosionDamage(Vector3 center, float radius)
+    void ExplosionDamage(Vector3 center, float radius,float forceAtCenter)
     {
         Collider[] hitColliders = Physics.OverlapSphere(center, radius);
         foreach (var hitCollider in hitColliders)
         {
-            hitCollider.SendMessage("AddDamage");
+            hitCollider.SendMessage("AddDamage");//other way of calling class in other object
+            if (hitCollider.attachedRigidbody)
+            {
+                float distanceSqr = Vector3.SqrMagnitude(hitCollider.transform.position-center);
+                hitCollider.attachedRigidbody.AddExplosionForce(forceAtCenter/distanceSqr,center,radius,0,ForceMode.Impulse);
+            }
         }
     }
 }

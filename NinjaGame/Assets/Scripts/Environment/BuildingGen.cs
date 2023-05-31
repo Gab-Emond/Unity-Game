@@ -23,6 +23,9 @@ public class BuildingGen : MonoBehaviour {
     //halls connect rooms/room doors connect rooms
 
 
+    
+    //use a* to find closest point if impossible to link, then reconnect from it
+
 
 
     //reinforce? least supported points
@@ -36,5 +39,7 @@ public class BuildingGen : MonoBehaviour {
     ////////////////
     //layout/theme, logical structure
     //floors? flat xz planes?
+
+
 
 }

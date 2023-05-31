@@ -57,6 +57,7 @@ public class Guard : MonoBehaviour, IDamageable
 		transform.position = wayPoints [0]; //puts guard at first waypoint
 		currentState = EntityState.Guarding;
 		
+		spotlight.shadowRadius = 0f;
 	}
 
 	
@@ -223,6 +224,8 @@ public class Guard : MonoBehaviour, IDamageable
 			else{
 				transform.position = Vector3.SmoothDamp(transform.position, targetWaypoint, ref currentVelocity, 1.25f , speed);//smoother than movetowards, sorta gauss func				}
 			}
+			//transform.position = Vector3.Lerp(transform.position, targetWaypoint, Mathf.SmoothStep(0f,1f,t));
+
 			yield return null;
 		}
 	}

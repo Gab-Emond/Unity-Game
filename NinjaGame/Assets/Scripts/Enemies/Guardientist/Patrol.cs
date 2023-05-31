@@ -6,6 +6,8 @@ using Utility.StateMachine;
 namespace Enemies.GuardBotFSM{
     public class Patrol : SciAlive {
 
+        Material lightMat;//the light/object color to change
+        Color baseColor;//flashlight 
         float speed;
         float turnSpeed;
         Vector3[] wayPoints;
@@ -15,12 +17,15 @@ namespace Enemies.GuardBotFSM{
       	IEnumerator move;
         Transform transform;
 
+        GuardBotFSM gMachine;
+
         public Patrol(GuardBotFSM stateMachine): base("Patrol", stateMachine){
             wayPoints = new Vector3[stateMachine.pathHolder.childCount];
             speed = stateMachine.speed;
             turnSpeed = stateMachine.turnSpeed;
             waitTime = stateMachine.waitTime;
             transform = stateMachine.GetComponent<Transform>();
+            gMachine = (GuardBotFSM)stateMachine;
             for (int i = 0; i< wayPoints.Length; i++){
 			    wayPoints[i] = stateMachine.pathHolder.GetChild(i).position;
 		    }
@@ -31,14 +36,16 @@ namespace Enemies.GuardBotFSM{
             move = FollowPath(wayPoints);
             stateMachine.StartCoroutine(move);
             //StartCoroutine(move);
+            //set light color: blue
+            
+            gMachine.SetOriginColor();
+            
         }
 
         public override void UpdateLogic(){
             base.UpdateLogic();
-
-            GuardBotFSM gMachine = (GuardBotFSM)stateMachine;
             
-            if(gMachine.TargetsInViewCollider){
+            if(gMachine.targetsInView.Count!=0){
                 stateMachine.ChangeState(stateMachine.states[typeof(Chase)]);
             }
             

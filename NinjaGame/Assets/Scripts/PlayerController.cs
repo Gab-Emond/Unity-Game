@@ -55,7 +55,7 @@ public class PlayerController : MonoBehaviour
             animator.SetBool("grounded",false);//jump vs fall, add transition bool (jump) before going to air
 
         }
-        if(movement.IsCrouching){
+        if(movement.IsCrouching && !movement.IsGrappled){//tech dept, to fix
             animator.SetBool("crouching",true);
         }
         else{
@@ -65,7 +65,7 @@ public class PlayerController : MonoBehaviour
 
         // }
 
-
+        //while crouching/landing, reduce collider size
     }
 
     //states
@@ -74,6 +74,12 @@ public class PlayerController : MonoBehaviour
     //on wall
     //grappled
     //
+
+    //control ik here
+    //fall to grounded; center of mass lower; (or animation layer, remake all anims as crouching, weight up-down-up on land)
+    //vice versa for jump
+
+    //wall climb ik
 
 
     void AnimationHandler(){

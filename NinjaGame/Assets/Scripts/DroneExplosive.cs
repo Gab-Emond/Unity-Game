@@ -1,5 +1,6 @@
 using System.Collections;
 using System.Collections.Generic;
+using System.Diagnostics;
 using UnityEngine;
 
 
@@ -221,9 +222,6 @@ public class DroneExplosive : MonoBehaviour, IDamageable //todo: change to enemy
 		Destroy(gameObject);
 		//destroying object should stop coroutines; (stop moving)
 	}
-
-
-
 
 	public void OnDrawGizmos() {
 		if (path != null) {

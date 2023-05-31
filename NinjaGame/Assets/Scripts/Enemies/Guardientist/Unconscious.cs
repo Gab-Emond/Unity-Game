@@ -31,7 +31,9 @@ namespace Enemies.GuardBotFSM{
             standing = false;
             timeSinceLastHit = Time.time;
             getUp = StandUp();
-            
+            GuardBotFSM gMachine = (GuardBotFSM)stateMachine;
+            gMachine.ChangeLightColor(Color.black,Color.black);
+
             //Color = Color.black;//texture offset?
 
         }

@@ -29,7 +29,7 @@ namespace Utility.Math
         }
         //out: has to give values to outcart (resulting pos)
 
-        public static int DotProdInArray(int[] A, int[] B){
+        public static int DotProdInArray(int[] A, int[] B){//needs to be same length
             int sum = 0;
             
             for(int i = 0; i<A.Length;i++){
@@ -284,6 +284,19 @@ namespace Utility.Math
             return _returnVector;
         }
 
+        public static Vector3 AverageVect(Vector3 v_1, Vector3 v_2){//aka midpoint of line
+            return (v_1+v_2)/2;
+        }
+
+        public static Vector2 GradientOfLine3D(Vector3 p1, Vector3 p2){//y vertical, xz horizontal
+            Debug.Log("verify use");
+            return new Vector2( (p2.y - p1.y) / (p2.x - p1.x), (p2.y - p1.y) / (p2.z - p1.z));
+        }//multiply by displacement x/z to know how much y moved?
+        //project on 2d plane of horizontal normal to do 2d gradient?
+        
+        public static float GradientOfLine2D(Vector2 p1, Vector2 p2){
+            return (p2.y - p1.y) / (p2.x - p1.x);
+        }
 
     }
 }

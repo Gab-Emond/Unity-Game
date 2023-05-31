@@ -2,6 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 using TMPro;
+using UnityEngine.Pool;
 
 public class ProjectileWeapon : MonoBehaviour
 {
@@ -12,6 +13,11 @@ public class ProjectileWeapon : MonoBehaviour
     public GameObject projectilePrefab;
     public Transform projectileSpawn;
     public float maxDistance = 200f;
+
+    //bullet pool
+    ObjectPool<Projectile> bulletPool;
+    public int maxPoolSize = 200;
+    public int defaultPoolSize = 10;
 
     //bullet force
     public float speed;
@@ -38,11 +44,18 @@ public class ProjectileWeapon : MonoBehaviour
     //bug fixing :D
     public bool allowInvoke = true;
 
+    void Awake() {
+        bulletPool = new ObjectPool<Projectile>(CreatePooledItem, OnTakeFromPool, OnReturnedToPool, OnDestroyPoolObject, false, defaultPoolSize, maxPoolSize);
+    }
     // Update is called once per frame
     void Update()
     {
-        
+        //MyInput();
 
+        // //Set ammo display, if it exists :D
+        // if (ammunitionDisplay != null)
+        //     ammunitionDisplay.SetText(bulletsLeft / bulletsPerTap + " / " + magazineSize / bulletsPerTap);
+        
         if(Input.GetKeyDown(KeyCode.Mouse0)){
            Shoot();
         }
@@ -100,7 +113,9 @@ public class ProjectileWeapon : MonoBehaviour
         //Vector3 v = bulletDirection.eulerAngles;
 
 
-        GameObject projectile = Instantiate(projectilePrefab, spawnPos, bulletDirection);
+        Projectile projectile = bulletPool.Get();//Instantiate(projectilePrefab, spawnPos, bulletDirection);
+        projectile.transform.position = spawnPos;
+        projectile.transform.rotation = bulletDirection;
         //Physics.IgnoreCollision(projectile.GetComponent<Collider>(), projectileSpawn.parent.GetComponent<Collider>());
 
         /*
@@ -109,7 +124,7 @@ public class ProjectileWeapon : MonoBehaviour
         rb.AddForce(-speed*projectileSpawn.forward, ForceMode.Impulse);//speed on weapon insdead of projectile?
         rb.AddForce(camera.transform.up * upwardForce, ForceMode.Impulse);
         */
-        projectile.GetComponent<Projectile>().Launch(speed);
+        projectile.Launch(speed);
 
     }
 
@@ -128,6 +143,40 @@ public class ProjectileWeapon : MonoBehaviour
         bulletsLeft = magazineSize;
         reloading = false;
     }
+
+
+    //bullet pool section
+
+    Projectile CreatePooledItem()//test, using get and release to handle pooled objects in and out (possibly, add event to object disable to return it to pool from there)
+    {
+        GameObject projectileObj = Instantiate(projectilePrefab);
+        Projectile thisProjObj = projectileObj.GetComponent<Projectile>();
+        thisProjObj.Pool = bulletPool;
+        projectileObj.SetActive(false);
+
+        return projectileObj.GetComponent<Projectile>();
+    }
+
+    // Called when an item is returned to the pool using Release
+    void OnReturnedToPool(Projectile bullet)
+    {
+        bullet.gameObject.SetActive(false);
+    }
+
+    // Called when an item is taken from the pool using Get
+    void OnTakeFromPool(Projectile bullet)
+    {
+        bullet.gameObject.SetActive(true);
+        //bullet.transform.position?
+    }
+
+    // If the pool capacity is reached then any items returned will be destroyed.
+    // We can control what the destroy behavior does, here we destroy the GameObject.
+    void OnDestroyPoolObject(Projectile bullet)
+    {
+        Destroy(bullet.gameObject);
+    }
+
 }
 
 

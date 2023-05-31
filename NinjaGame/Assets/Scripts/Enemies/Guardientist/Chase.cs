@@ -12,46 +12,76 @@ namespace Enemies.GuardBotFSM{
         Transform transform;
         float turnSpeed;
 
-        Transform targetPos;
-
-        public Chase(GuardBotFSM stateMachine): base("Chase", stateMachine){}// This constructor will call BaseClass.BaseClass()
+        float timeToAlert = 4f;
+        float spotTime;
+        //Transform targetPos;
+        GuardBotFSM gMachine;
+        public Chase(GuardBotFSM stateMachine): base("Chase", stateMachine){
+            gMachine = (GuardBotFSM)stateMachine;
+            transform = gMachine.transform;
+        }// This constructor will call BaseClass.BaseClass()
 
         public override void Enter(){//set 
             base.Enter();
+            //Debug.Log("spotted something");
+            spotTime = 0;
         }
 
         public override void UpdateLogic(){
             base.UpdateLogic();
-            bool targetInSightForTime = false;
 
             //Color.Lerp(startColor, Color.red, time-startTime);
-
-            Vector3 rayToTarget = Vector3.ProjectOnPlane(transform.position - targetPos.position, transform.forward);
-            //switchcase, (closest) distance between ray from eyes and target
-
-            switch(rayToTarget.sqrMagnitude){
-                // case(<1f):
-                //     //red
-                //     //alert
-                //     break;
-                // case(<4f):
-                //     //turn and go red
-                //     break;
-                // case(<9f):
-                //     //turn
-                //     break;
-
+            if(gMachine.targetsInView.Count==0){
+                spotTime-=4f*Time.deltaTime;
             }
+            else{
+                
+                foreach (var possibleTargets in gMachine.targetsInView){
+                    Debug.Log(possibleTargets.name);
+                    Transform targetForm = possibleTargets.transform;
+                    Vector3 rayToTarget = transform.position - targetForm.position;//Vector3.ProjectOnPlane(transform.position - targetPos.position, transform.up);
+                    //switchcase, (closest) distance between ray from eyes and target
+                    Debug.Log(rayToTarget);
+                    switch(rayToTarget.sqrMagnitude){
+                        case(<4f):
+                            spotTime+=8f*Time.deltaTime;
+                        //fast notice 
+                        //     //red
+                        //     //alert
+                            break;
+                        case(<16f):
+                            spotTime+=4f*Time.deltaTime;
+                        //medium notice
+                        //     //turn and go red
+                            break;
+                        case(<32f):
+                            spotTime+=3f*Time.deltaTime;
+                        //slow notice
+                        //     //turn
+                            break;
+                        default:
+                            spotTime+=2f*Time.deltaTime;
+                            break;
 
-            if(targetInSightForTime){
+                    }
+                }
+            }
+            
+
+            
+
+            if(spotTime>=timeToAlert){
                 stateMachine.ChangeState(stateMachine.states[typeof(Alert)]);
             }
-
-            bool targetOutOfSightForTime = false;
-            bool atLastSeenNode = false;
-            if(targetOutOfSightForTime && atLastSeenNode){
+            else if(spotTime<=0){
                 stateMachine.ChangeState(stateMachine.states[typeof(Patrol)]);
             }
+
+            // bool targetOutOfSightForTime = false;
+            // bool atLastSeenNode = false;
+            // if(targetOutOfSightForTime && atLastSeenNode){
+            //     stateMachine.ChangeState(stateMachine.states[typeof(Patrol)]);
+            // }
             
 
         }
