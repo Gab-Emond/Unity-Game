@@ -1,6 +1,7 @@
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
 
 public class WallMovementAnimRigging : MonoBehaviour {
     Transform leftLegTransf;
@@ -93,6 +94,8 @@ public class WallMovementAnimRigging : MonoBehaviour {
         yield return new WaitForSeconds(.1f);
 
     }
+
+
 
     void SetArmsLegsIk(){
         float angle = WallPlayerAngle();//in degrees
@@ -215,6 +218,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
         TwoBoneIKConstraint limbIk;// the inverse kinematics reference
 
+        float weight;//the ik importance
         
         public AnimationCurve heightCurve;
 
@@ -287,11 +291,25 @@ public class WallMovementAnimRigging : MonoBehaviour {
             yield return null;
         }
 
-        void EaseWeightIn(){//start of ik state 
+        IEnumerator EaseWeightIn(float totTime){//start of ik state 
+            float startTime = Time.time;
+            float timePassed;
+            while (weight<1){
+                timePassed = Time.time-startTime;
+                weight = Mathf.Lerp(0,1,timePassed/totTime);
+                yield return null;
+            }
             isGrounded = true;
         }
 
-        void EaseWeightOut(){//end of ik state
+        IEnumerator EaseWeightOut(float totTime){//end of ik state(set tot time to small value, to not interfere with other)
+            float startTime = Time.time;
+            float timePassed;
+            while (weight>0){
+                timePassed = Time.time-startTime;
+                weight = Mathf.Lerp(1,0,timePassed/totTime);
+                yield return null;
+            }
             isGrounded = false;
         }
     }
