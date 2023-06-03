@@ -19,6 +19,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
     Limb leftLeg;
     Limb rightLeg;    
 
+    IEnumerator main = mainController();
     bool noLimbsOnGround = true;
     //todo: set for different limb bounds per direction faced (3d zone around limb movement center)
     IEnumerator mainController() {//set up in coroutine
@@ -65,17 +66,17 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
             }
             else if(rightArm.IsActive){//should right arm move
-                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter,5);
+                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+playerMovement.velocity,5);
                 targetLimb = rightArm;
             }
             else{//check closest leg
                 if((WallClosestPos(leftLeg.MovementCenter,5)-leftLeg.MovementCenter).sqrMagnitude>(WallClosestPos(rightLeg.MovementCenter,5)-rightLeg.MovementCenter).sqrMagnitude){
                     //if right leg closer to wall than left leg
-                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter,5);
+                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+playerMovement.velocity,5);
                     targetLimb = rightLeg;
                 }
                 else{//left closer than right
-                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter,5);
+                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+playerMovement.velocity,5);
                     targetLimb = leftLeg;
                 }
             }
@@ -141,9 +142,11 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
         //inneficient, use project on plane, but for plane that doesnt pass through origin (simply substract offset from both, however must find offset)
         //
-        
 
+    }
 
+    public Vector3 BoundOnWall(){
+        Vector3 wallNormal;
     }
 
     //either travel cycloid, or travel circle around limb_origin, radius = dist(limb_origin, wall)
@@ -176,6 +179,28 @@ public class WallMovementAnimRigging : MonoBehaviour {
     private float WallPlayerAngle(){
         return Vector3.SignedAngle(wallNormal,playerBody.forward,Vector3.up);
     }
+
+    void OnEnterWall(){
+        
+        StartCoroutine(main);
+        
+    }
+    void OnExitWall(){//set state change to events, and subscribe?
+        // foreach (var item in limb)
+        // {
+            
+        // }
+        float timeToEase = .125f;
+
+        if(leftLeg.IsActive){StartCoroutine(leftLeg.EaseWeightOut(timeToEase));}
+        if(leftArm.IsActive){StartCoroutine(leftArm.EaseWeightOut(timeToEase));}
+        if(rightArm.IsActive){StartCoroutine(rightArm.EaseWeightOut(timeToEase));}
+        if(rightLeg.IsActive){StartCoroutine(rightLeg.EaseWeightOut(timeToEase));}
+
+        StopCoroutine(main);
+    }
+
+
 
     public class Limb {
 
@@ -291,7 +316,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
             yield return null;
         }
 
-        IEnumerator EaseWeightIn(float totTime){//start of ik state 
+        public IEnumerator EaseWeightIn(float totTime){//start of ik state 
             float startTime = Time.time;
             float timePassed;
             while (weight<1){
@@ -300,9 +325,10 @@ public class WallMovementAnimRigging : MonoBehaviour {
                 yield return null;
             }
             isGrounded = true;
+            isActive = true;
         }
 
-        IEnumerator EaseWeightOut(float totTime){//end of ik state(set tot time to small value, to not interfere with other)
+        public IEnumerator EaseWeightOut(float totTime){//end of ik state(set tot time to small value, to not interfere with other)
             float startTime = Time.time;
             float timePassed;
             while (weight>0){
@@ -311,6 +337,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
                 yield return null;
             }
             isGrounded = false;
+            isActive = false;
         }
     }
 
