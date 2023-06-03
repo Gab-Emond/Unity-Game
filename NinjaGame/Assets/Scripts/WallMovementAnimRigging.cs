@@ -21,6 +21,15 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
     IEnumerator main = mainController();
     bool noLimbsOnGround = true;
+    
+    private void Start() {
+        //initialize limbs 
+        leftArm = new Limb();
+        rightArm = new Limb();
+        leftLeg = new Limb();
+        rightLeg = new Limb(); 
+    }
+    
     //todo: set for different limb bounds per direction faced (3d zone around limb movement center)
     IEnumerator mainController() {//set up in coroutine
         //set ArmLegsIK
@@ -61,22 +70,22 @@ public class WallMovementAnimRigging : MonoBehaviour {
             if(leftArm.IsActive){//should left arm move ()
                 
                 
-                leftArm.targetPos.position = WallClosestPos(leftArm.MovementCenter,5);
+                leftArm.targetPos.position = WallClosestPos(leftArm.MovementCenter+rightArm.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
                 targetLimb = leftArm;
 
             }
             else if(rightArm.IsActive){//should right arm move
-                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+playerMovement.velocity,5);
+                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+rightArm.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
                 targetLimb = rightArm;
             }
             else{//check closest leg
                 if((WallClosestPos(leftLeg.MovementCenter,5)-leftLeg.MovementCenter).sqrMagnitude>(WallClosestPos(rightLeg.MovementCenter,5)-rightLeg.MovementCenter).sqrMagnitude){
                     //if right leg closer to wall than left leg
-                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+playerMovement.velocity,5);
+                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+rightLeg.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
                     targetLimb = rightLeg;
                 }
                 else{//left closer than right
-                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+playerMovement.velocity,5);
+                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+leftLeg.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
                     targetLimb = leftLeg;
                 }
             }
@@ -223,7 +232,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
         float boundParalSlow, boundParalFast;//furthest from moveCenter that can be reached, varies according to speed
         float boundPerpSlow, boundPerpFast;
-        float CurrentBoundsParal(float mag)=> Mathf.Lerp(boundParalSlow,boundParalFast,mag);
+        public float CurrentBoundsParal(float mag)=> Mathf.Lerp(boundParalSlow,boundParalFast,mag);
         float CurrentBoundsPerp(float mag)=> Mathf.Lerp(boundPerpSlow,boundPerpFast,mag);
         Limb oppositeLimb;//perhaps not necessary
 
