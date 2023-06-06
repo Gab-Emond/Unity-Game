@@ -110,27 +110,33 @@ public class WallMovementAnimRigging : MonoBehaviour {
     void SetArmsLegsIk(){
         float angle = WallPlayerAngle();//in degrees
         
+        //todo: have leg ik hints constant pos/rot relative to body pos/rot (no code, simple transform)
+        //todo(wip): when isactive change, use EaseIn/EaseOut coroutine
+        //todo: check if wall is at limb height; when arriving at bottom or top of surface, shouldnt use limbs
+        //todo(global): have inactive limbs compensate for weight; 
+        //for opposite limbs, find pos to COM, nudge to equal opposite pos to those
+
         if(-160>angle&&angle>160){//if facing ~ opposite of wall
-            leftArm.IsActive = true;
-            rightArm.IsActive = true;
+            if(!leftArm.IsActive){StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
+            if(!rightArm.IsActive){StartCoroutine(rightArm.EaseWeightIn(timeToIn));}
         }
             //either hands can connect to wall + legs
             //if ~isGrappled 
         else if(-5<angle&&angle<5){
-            leftArm.IsActive = true;
-            rightArm.IsActive = true;
+            if(!leftArm.IsActive){StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
+            if(!rightArm.IsActive){StartCoroutine(rightArm.EaseWeightIn(timeToIn));}
         }//if facing ~ same dir as wall normal
             //either hands
             //if ~isGrappled 
         else if(-160<angle&&angle<-5){
-            leftArm.IsActive = true;
-            rightArm.IsActive = false;
+            if(!leftArm.IsActive){StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
+            if(rightArm.IsActive){StartCoroutine(rightArm.EaseWeightOut(timeToOut));}
         }//if facing ~ left from wall normal
             //left hand needed
             //raycast (from: lefthandorigins, towards: wall normal )
         else if(5<angle&&angle<160){
-            leftArm.IsActive = false;
-            rightArm.IsActive = true;
+            if(leftArm.IsActive){StartCoroutine(leftArm.EaseWeightOut(timeToOut));}
+            if(!rightArm.IsActive){StartCoroutine(rightArm.EaseWeightIn(timeToIn));}
         }//if facing ~ right of wall normal
             //right hand needed
             //raycast (from: righthandorigins, towards: wall normal )
@@ -189,12 +195,16 @@ public class WallMovementAnimRigging : MonoBehaviour {
         return Vector3.SignedAngle(wallNormal,playerBody.forward,Vector3.up);
     }
 
-    void OnEnterWall(){
+    void EnterWall(){
         
         StartCoroutine(main);
-        
+        //legs weighted in automatically
+        //todo, when limbs deactivated (during rotation or use), ease them out
+        //when limb reactivated (post use), ease them back in
+        //subscribe to events (methods that use a limbs, event when start and when end)  
+
     }
-    void OnExitWall(){//set state change to events, and subscribe?
+    void ExitWall(){//set state change to events, and subscribe?
         // foreach (var item in limb)
         // {
             
@@ -325,28 +335,34 @@ public class WallMovementAnimRigging : MonoBehaviour {
             yield return null;
         }
 
-        public IEnumerator EaseWeightIn(float totTime){//start of ik state 
-            float startTime = Time.time;
+        public IEnumerator EaseWeightIn(float totTime){//start of ik state (useful when limb gets used)
+            float startTime = Time.time - totTime*Mathf.InverseLerp(0, 1, middleWeight);
             float timePassed;
+            isActive = true;
             while (weight<1){
                 timePassed = Time.time-startTime;
                 weight = Mathf.Lerp(0,1,timePassed/totTime);
                 yield return null;
             }
             isGrounded = true;
-            isActive = true;
+            
         }
 
         public IEnumerator EaseWeightOut(float totTime){//end of ik state(set tot time to small value, to not interfere with other)
-            float startTime = Time.time;
+            //todo set up to ease from middle, when activated/deactivated too quick
+            //inverse(middleWeight) = timePassed/totTime
+            //totTime*inverse(middleWeight) = timePassed = Time.time-startTime
+            //startTime = Time.time - totTime*inverse(middleWeight);//middleWeight = CurrentWeight
+            float startTime = Time.time - totTime*Mathf.InverseLerp(1,0,middleWeight);//takes into account having stopped halfway
             float timePassed;
+            isGrounded = false;
+            isActive = false;
             while (weight>0){
                 timePassed = Time.time-startTime;
                 weight = Mathf.Lerp(1,0,timePassed/totTime);
                 yield return null;
             }
-            isGrounded = false;
-            isActive = false;
+            
         }
     }
 

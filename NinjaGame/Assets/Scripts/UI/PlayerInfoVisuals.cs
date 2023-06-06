@@ -41,6 +41,7 @@ public class PlayerInfoVisuals : MonoBehaviour
     private void Update() {
         stamina = playerMovement.Stamina;
         
+        //todo: generalize wallmovementAnimRigging's lerping from middle to smoothstep from middle
         if(stamina >= prevStamina){
             
             if(stamina>maxStamina/2){

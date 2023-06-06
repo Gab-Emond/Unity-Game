@@ -124,13 +124,24 @@ namespace Utility.Math
             return frictVel;
         }
 
-
+        //InverseLerp, but for vectors
         public static float InverseLerp(Vector3 a, Vector3 b, Vector3 value){
             Vector3 AB = b - a;
             Vector3 AV = value - a;
             return Vector3.Dot(AV, AB) / Vector3.Dot(AB, AB);
         }
 
+        //lerp (a,b,t) = a +(b-a)*t = x
+        //t = (x-a)/(b-a)
+
+        //x=smoothstep(a,b,t) = v*v*(3-2*v); v = (t-a)/(b-a) (for t between 0 and 1)
+        //analytic inverse, along y = x
+
+        //https://stackoverflow.com/questions/28740544/inverted-smoothstep
+        public static float InverseSmoothStep(float x){
+            print("to be checked");
+            return 0.5f - Mathf.Sin(Mathf.Asin(1.0-2.0*x)/3.0);
+        }
 
         /////////////////////////////////LineInstersection 2d/////////////////
 
