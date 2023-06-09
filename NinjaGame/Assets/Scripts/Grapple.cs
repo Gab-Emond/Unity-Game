@@ -104,15 +104,36 @@ public class Grapple : MonoBehaviour {
         
         if(grappling){
             float minAngle = 60f;//make as class definition at some point
-            if(Mathf.Abs(Vector3.SignedAngle(headAim.up,grapplePoint-gunTip.position,headAim.forward))<minAngle){
-                float amount = Mathf.PI*Vector3.SignedAngle(headAim.up,grapplePoint-gunTip.position,headAim.forward)/minAngle;
+            float headTurnSpeed = 60f;//degrees per sec, to cap at some point
+            Vector3 armDir = grapplePoint-gunTip.position;
+            float angleHeadArm = Vector3.SignedAngle(headAim.up, Vector3.ProjectOnPlane(armDir,headAim.forward),headAim.forward); 
+            
+            //Debug.DrawRay(headAim.position,player.forward,Color.red);
+            
+            if(Mathf.Abs(angleHeadArm)<minAngle){
+                float amount =  (Mathf.PI)*angleHeadArm/minAngle;//(should be) linear value between PI and -PI 
 
-                //should be inverse; smaller angle between, larger difference
-                float angle = (-minAngle/2)*Mathf.Sin(amount);//Mathf.LerpAngle(minAngle/2,-minAngle/2,amount);
-                headAim.Rotate(new Vector3(0,0,angle),Space.Self);
+                //print(angleHeadArm/minAngle);
 
+                //smaller angle should give smaller difference, down to zero, with max at half point between min angle
+                float angle = (-minAngle/2)*Mathf.Sin(amount);
+
+                Quaternion anglRotation = Quaternion.Euler(0,0,angle);//headAim.rotation*
+
+                headAim.rotation = headAim.rotation*anglRotation;
+
+                // get original rotation in Update()
+                
+
+                // var step = headTurnSpeed * Time.deltaTime;
+
+                // Quaternion rotateTarget = headAim.rotation*anglRotation;
+
+                // headAim.rotation = Quaternion.RotateTowards(headAim.rotation, rotateTarget, step);
+                
                 //todo: headAim moves head for now
                 //add headBone transform, that moves head instead, and slerp to headAim at certain maxSpeed to ease movement
+
             }
         }
     }
