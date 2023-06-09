@@ -89,16 +89,18 @@ public class WallMovementAnimRigging : MonoBehaviour {
                     targetLimb = leftLeg;
                 }
             }
-            while (noLimbsOnGround)
+            while (noLimbsOnGround)//(!targetLimb.grounded and targetLimb.Active) 
             {
                 float timePassed = Time.time-startTime;     
-                 
+                
+                //start coroutine targetLimb movetowall
                 //leftArm.weight = Mathf.Min(1,timePassed/totTime);//lerp(0,1,timePassed)
                 if((timePassed/totTime) >=1){
                     noLimbsOnGround = false;
                 }           
                 yield return null;
             }
+            //if limb deactivated before reached, coroutine must be stopped
         }
 
         yield return new WaitForSeconds(.1f);
@@ -266,6 +268,10 @@ public class WallMovementAnimRigging : MonoBehaviour {
         
         public AnimationCurve heightCurve;
 
+        //how to stop reference to each coroutine from within coroutine
+        //only start class from within coroutine?
+        public IEnumerator InCoroutine, OutCoroutine;
+
         public Limb(WallMovementAnimRigging wallMovementAnimRigging,AnimationCurve _hCurve, Vector3 _movCenter,float _limbSpeedSlow, float _limbSpeedFast){
             parentMovingRig = wallMovementAnimRigging;
             heightCurve = _hCurve;
@@ -335,7 +341,19 @@ public class WallMovementAnimRigging : MonoBehaviour {
             yield return null;
         }
 
-        public IEnumerator EaseWeightIn(float totTime){//start of ik state (useful when limb gets used)
+        public StartEaseIn(float totTime){
+            InCoroutine = EaseWeightIn(totTime);
+            StartCoroutine(InCoroutine);
+        }
+        public StartEaseOut(float totTime){
+            OutCoroutine = EaseWeightOut(totTime);
+            StartCoroutine(OutCoroutine);
+        }
+
+        //use activate and deactivate class, that starts and stops each IEnumerator InCoroutine, OutCoroutine; 
+        IEnumerator EaseWeightIn(float totTime){//start of ik state (useful when limb gets used)
+            //if easing out, stop coroutine
+            parentMovingRig.StopCoroutine(OutCoroutine);
             float startTime = Time.time - totTime*Mathf.InverseLerp(0, 1, middleWeight);
             float timePassed;
             isActive = true;
@@ -348,11 +366,13 @@ public class WallMovementAnimRigging : MonoBehaviour {
             
         }
 
-        public IEnumerator EaseWeightOut(float totTime){//end of ik state(set tot time to small value, to not interfere with other)
+        IEnumerator EaseWeightOut(float totTime){//end of ik state(set tot time to small value, to not interfere with other)
             //todo set up to ease from middle, when activated/deactivated too quick
             //inverse(middleWeight) = timePassed/totTime
             //totTime*inverse(middleWeight) = timePassed = Time.time-startTime
             //startTime = Time.time - totTime*inverse(middleWeight);//middleWeight = CurrentWeight
+            //if easing in, stop coroutine
+            parentMovingRig.StopCoroutine(InCoroutine);
             float startTime = Time.time - totTime*Mathf.InverseLerp(1,0,middleWeight);//takes into account having stopped halfway
             float timePassed;
             isGrounded = false;
