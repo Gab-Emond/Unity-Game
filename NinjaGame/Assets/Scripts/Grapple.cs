@@ -104,7 +104,7 @@ public class Grapple : MonoBehaviour {
         
         if(grappling){
             float minAngle = 60f;//make as class definition at some point
-            float headTurnSpeed = 60f;//degrees per sec, to cap at some point
+            //float headTurnSpeed = 60f;//degrees per sec, to cap at some point
             Vector3 armDir = grapplePoint-gunTip.position;
             float angleHeadArm = Vector3.SignedAngle(headAim.up, Vector3.ProjectOnPlane(armDir,headAim.forward),headAim.forward); 
             

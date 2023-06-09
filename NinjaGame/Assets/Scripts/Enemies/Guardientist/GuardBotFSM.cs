@@ -78,7 +78,7 @@ namespace Enemies.GuardBotFSM{
 
         public void TakeHit(Vector3 damageDir, Vector3 damagePos){
             //if(stateMachine.Health > 0){stateMachine.Health -= 1;}
-            if(rb){
+            if(rb){//check issue if remove changestate from rb condition; possibly change rb check into trycatch error
                 if(rb.isKinematic){
                     EnableRagdoll();
                 }

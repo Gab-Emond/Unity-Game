@@ -119,9 +119,9 @@ public class PlatformGenerator_3 : MonoBehaviour
 
     IEnumerator GenerateRandomPath(Vector3 _start, Vector3 _end){
         print("startEnum");
-        pathOfNodes = RandomEnclosedPathGenerator(_start, _end);
+        yield return pathOfNodes = RandomEnclosedPathGenerator(_start, _end);
         print("endEnum");
-        return null;
+        yield return null;
     }
 
 

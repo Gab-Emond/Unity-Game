@@ -139,8 +139,8 @@ namespace Utility.Math
 
         //https://stackoverflow.com/questions/28740544/inverted-smoothstep
         public static float InverseSmoothStep(float x){
-            print("to be checked");
-            return 0.5f - Mathf.Sin(Mathf.Asin(1.0-2.0*x)/3.0);
+            Debug.Log("to be checked");
+            return 0.5f - Mathf.Sin(Mathf.Asin(1.0f-2.0f*x)/3.0f);
         }
 
         /////////////////////////////////LineInstersection 2d/////////////////

@@ -162,14 +162,14 @@ public class SkyLaser : MonoBehaviour
 
     IEnumerator IFocusOnTarget(float startTime, Vector3 position){
         focusing = true;
-        float step = laserSpeed*Time.deltaTime;
+        float step;
         float currTime;
         while(beamRadius != beamRadiusFinal){
-
+            step = laserSpeed*Time.deltaTime;
             currTime = (Time.time - startTime) / chargeUpTimeDuration;
             beamRadius = Mathf.SmoothStep(beamRadiusInit, beamRadiusFinal, currTime); 
             
-            laserCenter = Vector3.MoveTowards(laserCenter, position, step);
+            yield return laserCenter = Vector3.MoveTowards(laserCenter, position, step);
 
             transform.position = new Vector3(laserCenter.x, beamRadius,laserCenter.z);
             yield return null;

@@ -19,15 +19,18 @@ public class WallMovementAnimRigging : MonoBehaviour {
     Limb leftLeg;
     Limb rightLeg;    
 
-    IEnumerator main = mainController();
+    public AnimationCurve limbUpDownCurve;
+    IEnumerator main;
     bool noLimbsOnGround = true;
     
     private void Start() {
         //initialize limbs 
-        leftArm = new Limb();
-        rightArm = new Limb();
-        leftLeg = new Limb();
-        rightLeg = new Limb(); 
+        leftArm = new Limb(wallMovementAnimRigging:this,limbUpDownCurve);
+        rightArm = new Limb(wallMovementAnimRigging:this,limbUpDownCurve);
+        leftLeg = new Limb(wallMovementAnimRigging:this,limbUpDownCurve);
+        rightLeg = new Limb(wallMovementAnimRigging:this,limbUpDownCurve); 
+
+        main = mainController();
     }
     
     //todo: set for different limb bounds per direction faced (3d zone around limb movement center)
@@ -38,12 +41,12 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
         //arms should do opposite to leg, and both sets opposite to each other
 
-        while (true)//loop that contains all actions, gives control of time between loop
-        {
+        // while (true)//loop that contains all actions, gives control of time between loop
+        // {
 
-            yield return new WaitForSeconds(.1f);
+        //     yield return new WaitForSeconds(.1f);
  
-        }
+        // }
 
         //if no limbs used, at start, closest limbs reach first
         SetArmsLegsIk();
@@ -70,22 +73,22 @@ public class WallMovementAnimRigging : MonoBehaviour {
             if(leftArm.IsActive){//should left arm move ()
                 
                 
-                leftArm.targetPos.position = WallClosestPos(leftArm.MovementCenter+rightArm.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
+                leftArm.targetPos.position = WallClosestPos(leftArm.MovementCenter+rightArm.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
                 targetLimb = leftArm;
 
             }
             else if(rightArm.IsActive){//should right arm move
-                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+rightArm.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
+                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+rightArm.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
                 targetLimb = rightArm;
             }
             else{//check closest leg
                 if((WallClosestPos(leftLeg.MovementCenter,5)-leftLeg.MovementCenter).sqrMagnitude>(WallClosestPos(rightLeg.MovementCenter,5)-rightLeg.MovementCenter).sqrMagnitude){
                     //if right leg closer to wall than left leg
-                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+rightLeg.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
+                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+rightLeg.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
                     targetLimb = rightLeg;
                 }
                 else{//left closer than right
-                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+leftLeg.CurrentBoundsParal(.5)*playerMovement.velocity.normalized,5);
+                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+leftLeg.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
                     targetLimb = leftLeg;
                 }
             }
@@ -114,31 +117,32 @@ public class WallMovementAnimRigging : MonoBehaviour {
         
         //todo: have leg ik hints constant pos/rot relative to body pos/rot (no code, simple transform)
         //todo(wip): when isactive change, use EaseIn/EaseOut coroutine
-        //todo: check if wall is at limb height; when arriving at bottom or top of surface, shouldnt use limbs
+        //todo: check if wall is at limb height; when arriving at bottom or top of surface/wall, shouldnt use limbs
         //todo(global): have inactive limbs compensate for weight; 
         //for opposite limbs, find pos to COM, nudge to equal opposite pos to those
-
+        float timeToIn = 0.125f;
+        float timeToOut = 0.0625f;
         if(-160>angle&&angle>160){//if facing ~ opposite of wall
-            if(!leftArm.IsActive){StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
-            if(!rightArm.IsActive){StartCoroutine(rightArm.EaseWeightIn(timeToIn));}
+            if(!leftArm.IsActive){leftArm.StartEaseIn(timeToIn);} //StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
+            if(!rightArm.IsActive){rightArm.StartEaseIn(timeToIn);}
         }
             //either hands can connect to wall + legs
             //if ~isGrappled 
         else if(-5<angle&&angle<5){
-            if(!leftArm.IsActive){StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
-            if(!rightArm.IsActive){StartCoroutine(rightArm.EaseWeightIn(timeToIn));}
+            if(!leftArm.IsActive){leftArm.StartEaseIn(timeToIn);}
+            if(!rightArm.IsActive){rightArm.StartEaseIn(timeToIn);}
         }//if facing ~ same dir as wall normal
             //either hands
             //if ~isGrappled 
         else if(-160<angle&&angle<-5){
-            if(!leftArm.IsActive){StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
-            if(rightArm.IsActive){StartCoroutine(rightArm.EaseWeightOut(timeToOut));}
+            if(!leftArm.IsActive){leftArm.StartEaseIn(timeToIn);}
+            if(rightArm.IsActive){rightArm.StartEaseOut(timeToOut);}
         }//if facing ~ left from wall normal
             //left hand needed
             //raycast (from: lefthandorigins, towards: wall normal )
         else if(5<angle&&angle<160){
-            if(leftArm.IsActive){StartCoroutine(leftArm.EaseWeightOut(timeToOut));}
-            if(!rightArm.IsActive){StartCoroutine(rightArm.EaseWeightIn(timeToIn));}
+            if(leftArm.IsActive){leftArm.StartEaseOut(timeToOut);}
+            if(!rightArm.IsActive){rightArm.StartEaseIn(timeToIn);}
         }//if facing ~ right of wall normal
             //right hand needed
             //raycast (from: righthandorigins, towards: wall normal )
@@ -162,6 +166,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
     }
 
+    //bounds?
     public Vector3 BoundOnWall(){
         Vector3 wallNormal;
     }
@@ -213,10 +218,10 @@ public class WallMovementAnimRigging : MonoBehaviour {
         // }
         float timeToEase = .125f;
 
-        if(leftLeg.IsActive){StartCoroutine(leftLeg.EaseWeightOut(timeToEase));}
-        if(leftArm.IsActive){StartCoroutine(leftArm.EaseWeightOut(timeToEase));}
-        if(rightArm.IsActive){StartCoroutine(rightArm.EaseWeightOut(timeToEase));}
-        if(rightLeg.IsActive){StartCoroutine(rightLeg.EaseWeightOut(timeToEase));}
+        if(leftLeg.IsActive){leftLeg.StartEaseOut(timeToEase);}
+        if(leftArm.IsActive){leftArm.StartEaseOut(timeToEase);}
+        if(rightArm.IsActive){rightArm.StartEaseOut(timeToEase);}
+        if(rightLeg.IsActive){rightLeg.StartEaseOut(timeToEase);}
 
         StopCoroutine(main);
     }
@@ -341,20 +346,20 @@ public class WallMovementAnimRigging : MonoBehaviour {
             yield return null;
         }
 
-        public StartEaseIn(float totTime){
+        public void StartEaseIn(float totTime){
             InCoroutine = EaseWeightIn(totTime);
-            StartCoroutine(InCoroutine);
+            parentMovingRig.StartCoroutine(InCoroutine);
         }
-        public StartEaseOut(float totTime){
+        public void StartEaseOut(float totTime){
             OutCoroutine = EaseWeightOut(totTime);
-            StartCoroutine(OutCoroutine);
+            parentMovingRig.StartCoroutine(OutCoroutine);
         }
 
         //use activate and deactivate class, that starts and stops each IEnumerator InCoroutine, OutCoroutine; 
         IEnumerator EaseWeightIn(float totTime){//start of ik state (useful when limb gets used)
             //if easing out, stop coroutine
             parentMovingRig.StopCoroutine(OutCoroutine);
-            float startTime = Time.time - totTime*Mathf.InverseLerp(0, 1, middleWeight);
+            float startTime = Time.time - totTime*Mathf.InverseLerp(0, 1, weight);
             float timePassed;
             isActive = true;
             while (weight<1){
@@ -373,7 +378,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
             //startTime = Time.time - totTime*inverse(middleWeight);//middleWeight = CurrentWeight
             //if easing in, stop coroutine
             parentMovingRig.StopCoroutine(InCoroutine);
-            float startTime = Time.time - totTime*Mathf.InverseLerp(1,0,middleWeight);//takes into account having stopped halfway
+            float startTime = Time.time - totTime*Mathf.InverseLerp(1,0,weight);//takes into account having stopped halfway
             float timePassed;
             isGrounded = false;
             isActive = false;

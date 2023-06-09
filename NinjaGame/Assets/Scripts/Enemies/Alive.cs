@@ -25,8 +25,10 @@ namespace Enemies
                 }
                 rb.AddForceAtPosition(damageDir, damagePos, ForceMode.Impulse);
 
-                stateMachine.ChangeState(stateMachine.states[typeof(Dead)]);
             }
+
+            stateMachine.ChangeState(stateMachine.states[typeof(Dead)]);
+
         }
 
         void EnableRagdoll()

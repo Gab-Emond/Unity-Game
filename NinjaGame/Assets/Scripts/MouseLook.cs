@@ -55,7 +55,7 @@ public class MouseLook : MonoBehaviour
         distanceRadius = Mathf.Clamp(distanceRadius+Input.mouseScrollDelta.y, 0f, maxRadius); 
 
         
-        CheckOcclusionCollision();
+        //CheckOcclusionCollision();
         transform.localPosition = new Vector3(distanceRadius/8, distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));//camera position,
                 
         //x axis,  shifts to the side; distanceRadius/10

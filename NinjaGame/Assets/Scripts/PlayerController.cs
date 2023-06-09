@@ -61,12 +61,8 @@ public class PlayerController : MonoBehaviour
         else{
             animator.SetBool("crouching",false);
         }
-
-        //if(movement.IsOnWall)
-        //wallIKRig start
-
         // if(movement.IsGrappled){//can be grounded and grappled
-            
+
         // }
 
         //while crouching/landing, reduce collider size

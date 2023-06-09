@@ -624,6 +624,8 @@ public class PlayerMovement : MonoBehaviour
         if(isGrappled){
             //print("hit speed: "+ Vector3.Project(velocity,hit.normal));
             velocity -= Vector3.Project(velocity,hit.normal);
+            //todo: fix floating issue while on ground
+
             //print("result: "+ velocity);
         }
     }

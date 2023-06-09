@@ -88,7 +88,7 @@ public class TrainingRoomWalls : MonoBehaviour {
                         //
                     }
                     else{
-                        Pathfinding(cube.currNode, cube.endNode);
+                        //Pathfinding(cube.currNode, cube.endNode);
                     }
                     
                     i++;
@@ -125,7 +125,7 @@ public class TrainingRoomWalls : MonoBehaviour {
 
     }
 
-    class Cube{
+    public class Cube{
         GameObject thisObject;
 
         public Transform transform;
@@ -195,9 +195,9 @@ public class TrainingRoomWalls : MonoBehaviour {
 
             for (int i = 0; i < pathLength; i++)
             {
-                if(i%distX)
-                if(i%distY)
-                if(i%distZ)
+                // if(i%distX)
+                // if(i%distY)
+                // if(i%distZ)
 
                 //one for each of longest value
 
