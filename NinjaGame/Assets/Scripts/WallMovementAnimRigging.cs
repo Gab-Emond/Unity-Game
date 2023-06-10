@@ -123,26 +123,26 @@ public class WallMovementAnimRigging : MonoBehaviour {
         float timeToIn = 0.125f;
         float timeToOut = 0.0625f;
         if(-160>angle&&angle>160){//if facing ~ opposite of wall
-            if(!leftArm.IsActive){leftArm.StartEaseIn(timeToIn);} //StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
-            if(!rightArm.IsActive){rightArm.StartEaseIn(timeToIn);}
+            if(!leftArm.IsActive){leftArm.Activate(timeToIn);} //StartCoroutine(leftArm.EaseWeightIn(timeToIn));}
+            if(!rightArm.IsActive){rightArm.Activate(timeToIn);}
         }
             //either hands can connect to wall + legs
             //if ~isGrappled 
         else if(-5<angle&&angle<5){
-            if(!leftArm.IsActive){leftArm.StartEaseIn(timeToIn);}
-            if(!rightArm.IsActive){rightArm.StartEaseIn(timeToIn);}
+            if(!leftArm.IsActive){leftArm.Activate(timeToIn);}
+            if(!rightArm.IsActive){rightArm.Activate(timeToIn);}
         }//if facing ~ same dir as wall normal
             //either hands
             //if ~isGrappled 
         else if(-160<angle&&angle<-5){
-            if(!leftArm.IsActive){leftArm.StartEaseIn(timeToIn);}
-            if(rightArm.IsActive){rightArm.StartEaseOut(timeToOut);}
+            if(!leftArm.IsActive){leftArm.Activate(timeToIn);}
+            if(rightArm.IsActive){rightArm.Deactivate(timeToOut);}
         }//if facing ~ left from wall normal
             //left hand needed
             //raycast (from: lefthandorigins, towards: wall normal )
         else if(5<angle&&angle<160){
-            if(leftArm.IsActive){leftArm.StartEaseOut(timeToOut);}
-            if(!rightArm.IsActive){rightArm.StartEaseIn(timeToIn);}
+            if(leftArm.IsActive){leftArm.Deactivate(timeToOut);}
+            if(!rightArm.IsActive){rightArm.Activate(timeToIn);}
         }//if facing ~ right of wall normal
             //right hand needed
             //raycast (from: righthandorigins, towards: wall normal )
@@ -158,7 +158,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
         }
         else{
             //inRange=false;
-            return startPos+(wallNormal*checkDistance*0.5f);//or set a default pos for the limb to stay in if cant reach
+            return startPos+(wallNormal*checkDistance*2f);//if cant be reach, returns further than check distance, meaning limb cant reach wall (ex: side of wall reached)
         }
 
         //inneficient, use project on plane, but for plane that doesnt pass through origin (simply substract offset from both, however must find offset)
@@ -218,10 +218,10 @@ public class WallMovementAnimRigging : MonoBehaviour {
         // }
         float timeToEase = .125f;
 
-        if(leftLeg.IsActive){leftLeg.StartEaseOut(timeToEase);}
-        if(leftArm.IsActive){leftArm.StartEaseOut(timeToEase);}
-        if(rightArm.IsActive){rightArm.StartEaseOut(timeToEase);}
-        if(rightLeg.IsActive){rightLeg.StartEaseOut(timeToEase);}
+        if(leftLeg.IsActive){leftLeg.Deactivate(timeToEase);}
+        if(leftArm.IsActive){leftArm.Deactivate(timeToEase);}
+        if(rightArm.IsActive){rightArm.Deactivate(timeToEase);}
+        if(rightLeg.IsActive){rightLeg.Deactivate(timeToEase);}
 
         StopCoroutine(main);
     }
@@ -346,11 +346,12 @@ public class WallMovementAnimRigging : MonoBehaviour {
             yield return null;
         }
 
-        public void StartEaseIn(float totTime){
+        //check what (else) should be in these two methods
+        public void Activate(float totTime){
             InCoroutine = EaseWeightIn(totTime);
             parentMovingRig.StartCoroutine(InCoroutine);
         }
-        public void StartEaseOut(float totTime){
+        public void Deactivate(float totTime){
             OutCoroutine = EaseWeightOut(totTime);
             parentMovingRig.StartCoroutine(OutCoroutine);
         }
