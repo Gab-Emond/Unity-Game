@@ -75,7 +75,9 @@ public class MouseLook : MonoBehaviour
 
     
 
-
+    //avoidance vs intent
+    //a) can check occlusion once every 1/n seconds instead, to reduce intensity
+    //b) paradox vs player intent, if wants to push camera into wall, divert from it? 
     private void CheckOcclusionCollision(){//or cinemachine
 
         RaycastHit hit;

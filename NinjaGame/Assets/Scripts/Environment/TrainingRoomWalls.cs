@@ -83,9 +83,13 @@ public class TrainingRoomWalls : MonoBehaviour {
                 int i  = 0;
                 foreach (var cube in cubes)
                 {
-                    if(!IsOccupied(cubes[i].nextNode)){
+                    Vector3 targetPoint = cubes[i].nextNode;
+                    //if(cube moving):do nothing
+                    if(!IsOccupied(targetPoint)){//err will block when heading to point
+
                         //cubes[i] start moving towards next node
-                        //
+                        //startcoroutine(node.MoveToNext());
+                        occupiedSpace[(int)targetPoint.x,(int)targetPoint.y,(int)targetPoint.z] = true;
                     }
                     else{
                         //Pathfinding(cube.currNode, cube.endNode);
@@ -99,28 +103,28 @@ public class TrainingRoomWalls : MonoBehaviour {
             }
 
 
-            for(int i = 0; i<startPoints.Length;i++){
-                Vector3 path = endPoints[i]-startPoints[i];
-                Vector3 dir;
-                if(path.x*path.x >= path.y*path.y&& path.x*path.x>=path.z*path.z){
-                    dir = Vector3.right*Mathf.Sign(path.x);
-                }
-                else if(path.y*path.y >= path.x*path.x && path.y*path.y >=path.z*path.z){
-                    dir = Vector3.up*Mathf.Sign(path.y);
-                }
-                else{
-                    dir = Vector3.forward*Mathf.Sign(path.z);
-                }
+            // for(int i = 0; i<startPoints.Length;i++){
+            //     Vector3 path = endPoints[i]-startPoints[i];
+            //     Vector3 dir;
+            //     if(path.x*path.x >= path.y*path.y&& path.x*path.x>=path.z*path.z){
+            //         dir = Vector3.right*Mathf.Sign(path.x);
+            //     }
+            //     else if(path.y*path.y >= path.x*path.x && path.y*path.y >=path.z*path.z){
+            //         dir = Vector3.up*Mathf.Sign(path.y);
+            //     }
+            //     else{
+            //         dir = Vector3.forward*Mathf.Sign(path.z);
+            //     }
 
-                //if(Physics.Linecast(cubes[i].transform.position,cubes[i].transform.position+dir,))
-                //ienum
+            //     //if(Physics.Linecast(cubes[i].transform.position,cubes[i].transform.position+dir,))
+            //     //ienum
 
-                if(Vector3.Dot(cubes[i].transform.position,dir)-Mathf.Floor(Vector3.Dot(cubes[i].transform.position,dir))==0){
-                    //if at int position
-                }
+            //     if(Vector3.Dot(cubes[i].transform.position,dir)-Mathf.Floor(Vector3.Dot(cubes[i].transform.position,dir))==0){
+            //         //if at int position
+            //     }
 
-                cubes[i].transform.position += dir*cubeSpeed*Time.deltaTime; 
-            }
+            //     cubes[i].transform.position += dir*cubeSpeed*Time.deltaTime; 
+            // }
 
 
     }
@@ -180,24 +184,45 @@ public class TrainingRoomWalls : MonoBehaviour {
             //vect forward, upward, side, ordered by size
 
             //aka; switch row, elementary matrix operation
-            int maxLen;
+            int maxLen=0;
             int midLen;
             int shortestLen;
+            Vector3 moveDir;
             if(distX>=distY&&distX>=distZ){
                 maxLen = distX;
+                moveDir = Vector3.right;
             }
             else if(distZ>=distY&&distZ>=distX){
                 maxLen = distZ;
+                moveDir = Vector3.forward;
             }
-            else if(distY>=distX&&distY>=distZ){
+            else{// if(distY>=distX&&distY>=distZ)
                 maxLen = distY;
+                moveDir = Vector3.up;
             }
 
-            for (int i = 0; i < pathLength; i++)
+            int j  = 0;
+            for (int i = 0; i < maxLen; i++)
             {
-                // if(i%distX)
-                // if(i%distY)
-                // if(i%distZ)
+                if(j==0){
+                    path[j] = start;
+                }
+                else{
+                    path[j] = path[j-1]+moveDir;
+                }
+                j++;
+
+                
+                if(i%distX==0){
+                    
+                }
+                if(i%distY==0){
+
+                }
+                if(i%distZ==0){
+
+                }
+
 
                 //one for each of longest value
 

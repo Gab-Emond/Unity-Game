@@ -53,6 +53,7 @@ public class PlayerMovement : MonoBehaviour
     Vector3 slopeNormal;
     Vector3 wallNormal;
     Vector3 velocity = Vector3.zero;
+    public Vector3 Velocity => velocity;
     Vector3 move;
     Vector3 v_0;
     //private float timeOnWall = 0;

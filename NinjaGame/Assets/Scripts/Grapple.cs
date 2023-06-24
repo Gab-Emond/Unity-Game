@@ -140,6 +140,9 @@ public class Grapple : MonoBehaviour {
 
     /// <summary>
     /// Call whenever we want to start a grapple
+    //Todo: add aim assist:
+    //- possibility; instead of raycast, use spherecast
+    //-look through several hits instead of one, dont choose harmful cast unless only hit option
     /// </summary>
     void StartGrapple() {
         RaycastHit hit;

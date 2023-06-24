@@ -41,72 +41,64 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
         //arms should do opposite to leg, and both sets opposite to each other
 
-        // while (true)//loop that contains all actions, gives control of time between loop
-        // {
+        while (true)//loop that contains all actions, gives control of time between loop
+        {
 
-        //     yield return new WaitForSeconds(.1f);
- 
-        // }
-
-        //if no limbs used, at start, closest limbs reach first
-        SetArmsLegsIk();
-        //if(facing straight||facing back)
-        if(rightArm.IsGrounded||leftLeg.IsGrounded){
-            if(rightLeg.IsGrounded){StartCoroutine(rightLeg.TranslateBetweenGroundPoints());}
-            if(leftArm.IsGrounded){StartCoroutine(leftArm.TranslateBetweenGroundPoints());}
-        }
-        else if(leftArm.IsGrounded||rightLeg.IsGrounded){//is grounded (and inner is active)
-            if(leftLeg.IsGrounded){StartCoroutine(leftLeg.TranslateBetweenGroundPoints());}
-            if(rightArm.IsGrounded){StartCoroutine(rightArm.TranslateBetweenGroundPoints());}
-        }
-        else{//nothing grounded, like at start
-            //connect left arm
-            //if not possible, connect right arm,
-            //if not possible, connect left leg
-            float startTime = Time.time;
-            float totTime=.25f;//time to reach wall//(start limb pos - end limb pos(wallclosestpos).magnitude)/armVelocity
-            
-            Limb targetLimb;
-
-            //Limb.StartPos = WallClosestPos
-            //lerp ik weight to close distance
-            if(leftArm.IsActive){//should left arm move ()
                 
-                
-                leftArm.targetPos.position = WallClosestPos(leftArm.MovementCenter+rightArm.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
-                targetLimb = leftArm;
 
+            //if no limbs used, at start, closest limbs reach first
+            SetArmsLegsIk();
+            //if(facing straight||facing back)
+            if(rightArm.IsGrounded||leftLeg.IsGrounded){
+                if(rightLeg.IsGrounded){StartCoroutine(rightLeg.TranslateBetweenGroundPoints());}
+                if(leftArm.IsGrounded){StartCoroutine(leftArm.TranslateBetweenGroundPoints());}
             }
-            else if(rightArm.IsActive){//should right arm move
-                rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+rightArm.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
-                targetLimb = rightArm;
+            else if(leftArm.IsGrounded||rightLeg.IsGrounded){//is grounded (and inner is active)
+                if(leftLeg.IsGrounded){StartCoroutine(leftLeg.TranslateBetweenGroundPoints());}
+                if(rightArm.IsGrounded){StartCoroutine(rightArm.TranslateBetweenGroundPoints());}
             }
-            else{//check closest leg
-                if((WallClosestPos(leftLeg.MovementCenter,5)-leftLeg.MovementCenter).sqrMagnitude>(WallClosestPos(rightLeg.MovementCenter,5)-rightLeg.MovementCenter).sqrMagnitude){
-                    //if right leg closer to wall than left leg
-                    rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+rightLeg.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
-                    targetLimb = rightLeg;
+            else{//nothing grounded, like at start
+                //connect left arm
+                //if not possible, connect right arm,
+                //if not possible, connect left leg
+                float startTime = Time.time;
+                float totTime=.25f;//time to reach wall//(start limb pos - end limb pos(wallclosestpos).magnitude)/armVelocity
+                
+                Limb targetLimb;
+
+                //Limb.StartPos = WallClosestPos
+                //lerp ik weight to close distance
+                if(leftArm.IsActive){//should left arm move ()
+                    
+                    
+                    leftArm.targetPos.position = WallClosestPos(leftArm.MovementCenter+rightArm.CurrentBoundsParal(.5f)*playerMovement.Velocity.normalized,5);
+                    targetLimb = leftArm;
+
                 }
-                else{//left closer than right
-                    leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+leftLeg.CurrentBoundsParal(.5f)*playerMovement.velocity.normalized,5);
-                    targetLimb = leftLeg;
+                else if(rightArm.IsActive){//should right arm move
+                    rightArm.targetPos.position = WallClosestPos(rightArm.MovementCenter+rightArm.CurrentBoundsParal(.5f)*playerMovement.Velocity.normalized,5);
+                    targetLimb = rightArm;
                 }
+                else{//check closest leg
+                    if((WallClosestPos(leftLeg.MovementCenter,5)-leftLeg.MovementCenter).sqrMagnitude>(WallClosestPos(rightLeg.MovementCenter,5)-rightLeg.MovementCenter).sqrMagnitude){
+                        //if right leg closer to wall than left leg
+                        rightLeg.targetPos.position = WallClosestPos(rightLeg.MovementCenter+rightLeg.CurrentBoundsParal(.5f)*playerMovement.Velocity.normalized,5);
+                        targetLimb = rightLeg;
+                    }
+                    else{//left closer than right
+                        leftLeg.targetPos.position = WallClosestPos(leftLeg.MovementCenter+leftLeg.CurrentBoundsParal(.5f)*playerMovement.Velocity.normalized,5);
+                        targetLimb = leftLeg;
+                    }
+                }
+                while(!targetLimb.IsGrounded && targetLimb.IsActive) //to make sure if turns, another limb reaches to target
+                {
+                   targetLimb.Activate(totTime);
+                }
+                //if limb deactivated before reached, coroutine must be stopped
             }
-            while (noLimbsOnGround)//(!targetLimb.grounded and targetLimb.Active) 
-            {
-                float timePassed = Time.time-startTime;     
-                
-                //start coroutine targetLimb movetowall
-                //leftArm.weight = Mathf.Min(1,timePassed/totTime);//lerp(0,1,timePassed)
-                if((timePassed/totTime) >=1){
-                    noLimbsOnGround = false;
-                }           
-                yield return null;
-            }
-            //if limb deactivated before reached, coroutine must be stopped
-        }
 
-        yield return new WaitForSeconds(.1f);
+            yield return new WaitForSeconds(.1f);
+        }
 
     }
 
@@ -167,9 +159,9 @@ public class WallMovementAnimRigging : MonoBehaviour {
     }
 
     //bounds?
-    public Vector3 BoundOnWall(){
-        Vector3 wallNormal;
-    }
+    // public Vector3 BoundOnWall(){
+    //     Vector3 wallNormal;
+    // }
 
     //either travel cycloid, or travel circle around limb_origin, radius = dist(limb_origin, wall)
     //cycloid
@@ -235,11 +227,13 @@ public class WallMovementAnimRigging : MonoBehaviour {
         public Transform targetPos;
         Vector3 targetGroundPos;
         bool isGrounded;
-        public bool IsGrounded => isGrounded&&isActive;
+        public bool IsGrounded => isGrounded;
         bool isActive;//true: used for climb, false otherwise
         public bool IsActive{get; set;}
         Vector3 movementCenter;//relative to player COM
         public Vector3 MovementCenter => movementCenter;
+
+        //note: keep movement center out of the way of other movement centers, depending on dir(legs or arms)
 
         float limbLength;
         Transform limb_Origin;
@@ -322,10 +316,32 @@ public class WallMovementAnimRigging : MonoBehaviour {
         //x* velocity vector
         //y* wall normal
         //+startingPos: when touching ground/wall, change starting pos again
-        IEnumerator TranslateFromIdle(){//needs a specified end Pos
+
+        //note; if goes to another action requiring ik, like throw or swing(while hang), unground rather than deactivate
+
+        //check what (else) should be in these two methods
+        public void Activate(float totTime){
+            InCoroutine = EaseWeightIn(totTime);
+            parentMovingRig.StopCoroutine(OutCoroutine);
+            parentMovingRig.StartCoroutine(InCoroutine);
+        }
+        public void Deactivate(float totTime){
+            OutCoroutine = EaseWeightOut(totTime);
+            parentMovingRig.StopCoroutine(InCoroutine);
+            parentMovingRig.StartCoroutine(OutCoroutine);
+        }
+
+        //can activate without ground(?,) but def cant ground without activate
+        //todo: 3 states, grounded, ik-Active, ik-Inactive
+        IEnumerator Ground(){
+
+             //pos relative to playerpos
             Vector3 speedDir = comSpeed.normalized;
             float speedMag = CurrentLimbSpeed(comSpeed.magnitude);//the speed at which the limb will reach the target, regardless of speed changes afterwards
-            endPos = movementCenter+speedDir*CurrentBoundsParal(speedMag);
+            
+            //edit here, to get proper ground
+            endPos = parentMovingRig.WallClosestPos(movementCenter,5f);
+
             float timeToReach = (endPos-startPos).magnitude/speedMag;
             float timeSinceStart = 0;
             while (targetPos.position!=endPos)
@@ -345,21 +361,18 @@ public class WallMovementAnimRigging : MonoBehaviour {
             }
             yield return null;
         }
+        void Retarget(Transform targetTransf){
+            //return to and idle position (movement center?)
+            startPos = targetPos;
+            endPos = targetTransf;
+            
+        }
 
-        //check what (else) should be in these two methods
-        public void Activate(float totTime){
-            InCoroutine = EaseWeightIn(totTime);
-            parentMovingRig.StartCoroutine(InCoroutine);
-        }
-        public void Deactivate(float totTime){
-            OutCoroutine = EaseWeightOut(totTime);
-            parentMovingRig.StartCoroutine(OutCoroutine);
-        }
 
         //use activate and deactivate class, that starts and stops each IEnumerator InCoroutine, OutCoroutine; 
         IEnumerator EaseWeightIn(float totTime){//start of ik state (useful when limb gets used)
             //if easing out, stop coroutine
-            parentMovingRig.StopCoroutine(OutCoroutine);
+            
             float startTime = Time.time - totTime*Mathf.InverseLerp(0, 1, weight);
             float timePassed;
             isActive = true;
@@ -378,7 +391,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
             //totTime*inverse(middleWeight) = timePassed = Time.time-startTime
             //startTime = Time.time - totTime*inverse(middleWeight);//middleWeight = CurrentWeight
             //if easing in, stop coroutine
-            parentMovingRig.StopCoroutine(InCoroutine);
+            
             float startTime = Time.time - totTime*Mathf.InverseLerp(1,0,weight);//takes into account having stopped halfway
             float timePassed;
             isGrounded = false;
@@ -392,6 +405,7 @@ public class WallMovementAnimRigging : MonoBehaviour {
         }
     }
 
+    
     private void OnDrawGizmos() {
         //draw the positions of limb targets
         Gizmos.color = Color.green;
