@@ -53,11 +53,17 @@ public class ObjectThrow : MonoBehaviour {
 
 public class IKController {
 
-    
-    public void EndMovement(IkMovement movement){
+    //changeMovement: 
+    public void EndMovement(IKMovement movement){//message recieved telling it movement was ended
 
     } //end the movement currently playing; also decide if need to start or end next movement
 }
+
+abstract class IKMovement {//general class for all movements done with ik
+    void Enter();//setup for start of movement
+    void Exit();//cleanup to end the movement
+}
+
 
 public class Limb {
     public bool Active;
