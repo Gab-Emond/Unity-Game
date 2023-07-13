@@ -43,7 +43,8 @@ public class ObjectThrow : MonoBehaviour {
             
         }
 
-        playerIkController.EndMovement(this);
+        //playerIkController.EndMovement(this);
+        
         //ik controller script decides and sends start message movement 
         //stop targetting after, send end movement message (to global ik controller script)
 
@@ -53,15 +54,17 @@ public class ObjectThrow : MonoBehaviour {
 
 public class IKController {
 
-    //changeMovement: 
-    public void EndMovement(IKMovement movement){//message recieved telling it movement was ended
+    
 
-    } //end the movement currently playing; also decide if need to start or end next movement
+    //changeMovement: 
+    //public void EndMovement(IKMovement movement){}//message recieved telling it movement was ended
+
+     //end the movement currently playing; also decide if need to start or end next movement
 }
 
 abstract class IKMovement {//general class for all movements done with ik
-    void Enter();//setup for start of movement
-    void Exit();//cleanup to end the movement
+    //void Enter();//setup for start of movement
+    //void Exit();//cleanup to end the movement
 }
 
 

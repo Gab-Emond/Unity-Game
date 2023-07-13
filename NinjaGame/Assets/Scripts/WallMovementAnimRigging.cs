@@ -235,7 +235,8 @@ public class WallMovementAnimRigging : MonoBehaviour {
 
         //note: keep movement center out of the way of other movement centers, depending on dir(legs or arms)
 
-        float limbLength;
+        float maxLength;
+        public float MaxLength => maxLength;
         Transform limb_Origin;
         
         Vector3 wallNormal;
@@ -271,10 +272,10 @@ public class WallMovementAnimRigging : MonoBehaviour {
         //only start class from within coroutine?
         public IEnumerator InCoroutine, OutCoroutine;
 
-        public Limb(WallMovementAnimRigging wallMovementAnimRigging,AnimationCurve _hCurve, Vector3 _movCenter,float _limbSpeedSlow, float _limbSpeedFast){
+        public Limb(WallMovementAnimRigging wallMovementAnimRigging,AnimationCurve _hCurve,float _limbSpeedSlow=1f, float _limbSpeedFast=4f){
             parentMovingRig = wallMovementAnimRigging;
             heightCurve = _hCurve;
-            movementCenter = _movCenter;
+            //movementCenter = _movCenter;
         }
         
         //when opposite limb touching ground, can start moving
@@ -363,8 +364,8 @@ public class WallMovementAnimRigging : MonoBehaviour {
         }
         void Retarget(Transform targetTransf){
             //return to and idle position (movement center?)
-            startPos = targetPos;
-            endPos = targetTransf;
+            //startPos = targetPos;
+            //endPos = targetTransf;
             
         }
 
