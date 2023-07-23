@@ -35,13 +35,16 @@ public class ObjectThrow : MonoBehaviour {
         //Vector3 dv = velocity;
 
         float timeToReachArmLength = throwingArm.MaxLength*throwingArm.MaxLength*(velocity.sqrMagnitude)/Vector3.Dot(relVect,velocity);
-        float lerpTime=Time.time;
+        float lerpTime=0;
 
 
         while (lerpTime<timeToReachArmLength)
         {
-            
+            lerpTime+=Time.deltaTime;
+            yield return null;
         }
+
+        //simple timer, arm retarget does throwing motion
 
         //playerIkController.EndMovement(this);
         
@@ -52,34 +55,4 @@ public class ObjectThrow : MonoBehaviour {
     }
 }
 
-public class IKController {
-
-    
-
-    //changeMovement: 
-    //public void EndMovement(IKMovement movement){}//message recieved telling it movement was ended
-
-     //end the movement currently playing; also decide if need to start or end next movement
-}
-
-abstract class IKMovement {//general class for all movements done with ik
-    //void Enter();//setup for start of movement
-    //void Exit();//cleanup to end the movement
-}
-
-
-public class Limb {
-    public bool Active;
-    public float MaxLength;
-
-    public Vector3 CurrPos;
-
-    public void Activate(){
-
-    }
-    public void Retarget(Transform _targ){
-
-    }
-
-}
 
