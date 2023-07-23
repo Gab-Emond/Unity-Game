@@ -242,10 +242,13 @@ public class WallMovementAnimRigging : MonoBehaviour {
         Vector3 wallNormal;
         //set bounds(min max that center can reach before having to move, depending on speed)
 
+        /////to be transferred to wallmovement
         float boundParalSlow, boundParalFast;//furthest from moveCenter that can be reached, varies according to speed
         float boundPerpSlow, boundPerpFast;
         public float CurrentBoundsParal(float mag)=> Mathf.Lerp(boundParalSlow,boundParalFast,mag);
         float CurrentBoundsPerp(float mag)=> Mathf.Lerp(boundPerpSlow,boundPerpFast,mag);
+        /////
+        
         Limb oppositeLimb;//perhaps not necessary
 
         float innerPath;//0 to 1, .5 when back at center 
