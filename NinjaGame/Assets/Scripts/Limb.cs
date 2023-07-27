@@ -1,4 +1,6 @@
 using UnityEngine;
+using UnityEngine.Animations.Rigging;
+
 
 public class Limb : MonoBehaviour {
     public Transform targetPos;
@@ -7,8 +9,6 @@ public class Limb : MonoBehaviour {
     public bool IsGrounded => isGrounded;
     bool isActive;//true: used for climb, false otherwise
     public bool IsActive{get; set;}    
-    public float maxLength;
-
     public Vector3 CurrPos;
 
     Vector3 movementCenter;//relative to player COM

@@ -14,7 +14,7 @@ public class ObjectThrow : MonoBehaviour {
         //if was still throwing, end throw 
         //(or/and set time between throw to always larger than throw)?
 
-        if(!throwingArm.Active){
+        if(!throwingArm.IsActive){
             throwingArm.Activate();
         }
         
@@ -41,7 +41,7 @@ public class ObjectThrow : MonoBehaviour {
         while (lerpTime<timeToReachArmLength)
         {
             lerpTime+=Time.deltaTime;
-            yield return null;
+            //yield return null;
         }
 
         //simple timer, arm retarget does throwing motion
