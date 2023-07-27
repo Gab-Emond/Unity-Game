@@ -15,6 +15,8 @@ public class MouseLook : MonoBehaviour
     float distanceRadius= 0f;
     public float maxRadius = 20f;
 
+    public AnimationCurve xShiftForRadius;
+
     // Start is called before the first frame update
 
     //3rd person
@@ -55,21 +57,27 @@ public class MouseLook : MonoBehaviour
         distanceRadius = Mathf.Clamp(distanceRadius+Input.mouseScrollDelta.y, 0f, maxRadius); 
 
         
-        //CheckOcclusionCollision();
-        transform.localPosition = new Vector3(distanceRadius/8, distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));//camera position,
+        CheckOcclusionCollision();
+        transform.localPosition = new Vector3((maxRadius/8)*xShiftForRadius.Evaluate(distanceRadius/maxRadius), distanceRadius*Mathf.Sin(xRotation*Mathf.Deg2Rad)+0.5f, -distanceRadius*Mathf.Cos(xRotation*Mathf.Deg2Rad));//camera position,
                 
-        //x axis,  shifts to the side; distanceRadius/10
+        //x axis,  shifts to the side; distanceRadius/8
+
+        //on player look up (xRotation in the negatives), move camera to the side of player if r!=0, +Mathf.Abs(xRotation*Mathf.Deg2Rad)/distanceRadius
+
+
         transform.localRotation = Quaternion.Euler(xRotation,0f,0f);//rotate camera
         playerBody.Rotate(Vector3.up* mouseX);//rotate player, and camera by parenting
     
         //for more complex 3rd person, edit player rotate more smoothly, when condition met
 
 
+        
+
 
         //move hands up with camera?
 
         
-        //interact here?
+        //interact here? (or events?)
         
     }
 

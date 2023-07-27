@@ -2912,6 +2912,48 @@ MonoBehaviour:
     m_Bits: 256
   playerBody: {fileID: 1693885260}
   maxRadius: 20
+  xShiftForRadius:
+    serializedVersion: 2
+    m_Curve:
+    - serializedVersion: 3
+      time: 0
+      value: 0
+      inSlope: 5.6832657
+      outSlope: 5.6832657
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 0.08640918
+      value: 0.49108633
+      inSlope: 0.021053942
+      outSlope: 0.021053942
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.24291418
+    - serializedVersion: 3
+      time: 0.5083056
+      value: 0.43947828
+      inSlope: -0.0042995894
+      outSlope: -0.0042995894
+      tangentMode: 0
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0.33333334
+    - serializedVersion: 3
+      time: 1
+      value: 0.4910469
+      inSlope: 0.10487943
+      outSlope: 0.10487943
+      tangentMode: 34
+      weightedMode: 0
+      inWeight: 0.33333334
+      outWeight: 0
+    m_PreInfinity: 2
+    m_PostInfinity: 2
+    m_RotationOrder: 4
 --- !u!120 &963194231
 LineRenderer:
   m_ObjectHideFlags: 0

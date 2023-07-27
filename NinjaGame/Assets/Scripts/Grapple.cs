@@ -25,7 +25,8 @@ public class Grapple : MonoBehaviour {
     public MultiRotationConstraint spineRotIk;
 
     public LayerMask whatIsGrappleable;
-    public Transform gunTip, camera, player;
+    public Transform gunTip, player;
+    Transform camera;
     public float ropeSpeed = 150f;
     private float maxDistance = 100f;
     private bool grappling;
